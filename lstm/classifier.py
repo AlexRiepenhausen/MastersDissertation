@@ -4,24 +4,19 @@ from utilities import utilities
 
 if __name__ == '__main__':
 
-    '''
     # convert documents into vector representations
     files = utilities.generateFilePaths('../data/documents/test_', 3, '.txt')
     vectors = '../data/dictionary/dict.vec'
     converter = File2VecConverter(files, vectors)
-    converter.convertDocuments()
-    '''
+    #converter.convertDocuments()
+
+    reverse_dict = converter.readVectorsDict(reverse=True)
 
     #https://github.com/keitakurita/Practical_NLP_in_PyTorch/blob/master/deep_dives/lstm_from_scratch.ipynb
     files = utilities.generateFilePaths('../data/vectors/vec_', 3,'.vec')
     dataReader = VectorDataset(files)
 
-    count = 0
     for i in dataReader:
-
-        for j in i:
-            count += 1
-            print(j)
-        print(count)
+        utilities.printVecToWords(reverse_dict,i)
         exit(0)
 
