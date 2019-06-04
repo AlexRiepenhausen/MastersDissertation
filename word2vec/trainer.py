@@ -3,9 +3,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataReaderDoc import DataReader, Word2vecDataset
-from word2vec import SkipGramModel
-from utilities import utilities
+from word2vec.dataReaderDoc import DataReader, Word2vecDataset
+from word2vec.word2vec import SkipGramModel
 
 
 class Word2VecTrainer:
@@ -56,11 +55,4 @@ class Word2VecTrainer:
                     if i > 0 and i % 500 == 0:
                         print(" Loss: " + str(running_loss))
 
-            self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)
-
-
-if __name__ == '__main__':
-    #https://github.com/Andras7/word2vec-pytorch
-    files = utilities.generateFilePaths('../data/documents/test_', 3, '.txt')
-    w2v = Word2VecTrainer(input_files=files, output_file="../data/dictionary/dict.vec",iterations=300,min_count=1)
-    w2v.train()
+        self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)

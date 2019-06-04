@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from utilities import utilities
 
 class VectorDataset(Dataset):
+
     def __init__(self, file_paths):
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
@@ -21,5 +22,5 @@ class VectorDataset(Dataset):
             arr = np.fromstring(line.replace("['","").replace("']","").replace("\n",""), dtype=float, sep="', '")
             vectors.append(arr)
 
-        return np.asarray(vectors)
+        return torch.tensor([np.asarray(vectors)]).double()
 

@@ -58,15 +58,3 @@ class LSTM(nn.Module):
         hidden_seq = hidden_seq.transpose(Dim.batch, Dim.seq).contiguous()
         return hidden_seq, (h_t, c_t)
 
-'''
-batch_size, seq_len, feat_sz, hidden_sz = 5, 10, 32, 16
-arr = torch.randn(batch_size, seq_len, feat_sz)
-lstm = LSTM(feat_sz, hidden_sz) # input size and hidden size
-hs, (hn,cn) = lstm(arr)
-
-lstm = LSTM(100, 32)
-a = torch.arange(5 * 10 * 100).view((5, 10, 100))
-hs, _ = lstm(a.float())
-print(hs.shape)
-'''
-

@@ -8,10 +8,10 @@ from utilities import utilities
 
 class File2VecConverter:
 
-    def __init__(self, doc_file_paths, vec_file_path):
+    def __init__(self, doc_file_paths, dict_file_path):
 
         self.doc_file_paths = doc_file_paths
-        self.vec_file_path = vec_file_path
+        self.dict_file_path = dict_file_path
 
         self.num_vectors = 0
         self.vector_size = 0
@@ -23,7 +23,7 @@ class File2VecConverter:
     def readVectorsDict(self,reverse=False):
 
         lines = []
-        for line in open(self.vec_file_path, encoding="utf8"):
+        for line in open(self.dict_file_path, encoding="utf8"):
             lines.append(line)
 
         self.num_vectors = np.int_(lines[0].split()[0])
@@ -55,18 +55,20 @@ class File2VecConverter:
 
 
     # converts original text documents into (pretrained) vector representations and writes them to file directory
-    def convertDocuments(self):
+    def convertDocuments(self,vec_files):
 
         count = 0
+        print("Writing vectors to files ...")
         for file in self.doc_file_paths:
-            file_name = '../data/vectors/vec_' + str(count) + '.vec'
+
             vectors = self.vecToLine(file)
 
-            with open(file_name, 'w') as f:
+            with open(vec_files[count], 'w') as f:
                 for i in range(0,len(vectors)):
                     f.write(str(vectors[i]) + '\n')
 
             count += 1
+        print("Done")
 
 
     # looks vector up in word2vec dictionary and writes single line to file

@@ -25,8 +25,9 @@ class DataReader:
         self.initTableNegatives()
         self.initTableDiscards()
 
-
+    # read words and create word2id and id2word lookup tables
     def readWords(self, min_count):
+        print("Setting up word2vec training")
         word_frequency = dict()
         for file in self.file_paths:
             for line in open(file, encoding="utf8"):
@@ -49,7 +50,7 @@ class DataReader:
             self.id2word[wid] = w
             self.word_frequency[wid] = c
             wid += 1
-        print("Total embeddings: " + str(len(self.word2id)))
+        print("Total embeddings: " + str(len(self.word2id))+ '\n')
 
     def initTableDiscards(self):
         t = 0.0001
