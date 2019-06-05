@@ -1,9 +1,9 @@
 import torch
+import numpy as np
+import matplotlib.pyplot as plt
 from utilities import utilities
 from word2vec.trainer import Word2VecTrainer
-from lstm.file2VecConverter import File2VecConverter
-from lstm.dataReaderVec import VectorDataset
-from lstm.lstm import LSTM
+from lstm.trainer import LSTMTrainer
 
 from enum import IntEnum
 
@@ -12,20 +12,10 @@ class Mode(IntEnum):
     conversion = 1
     lstm       = 2
 
-# convert documents into vector representations and write them to files
-def documentVectorisation(doc_files, vec_files, dict_file, debug=False):
-
-    converter = File2VecConverter(doc_files, dict_file)
-    converter.convertDocuments(vec_files)
-
-    if debug:
-        dataReader = VectorDataset(vec_files)
-        reverse_dict = converter.readVectorsDict(reverse=True)
-
-        for vector_doc in dataReader:
-            utilities.printVecToWords(reverse_dict, vector_doc)
-            exit(0)
-
+def plotAccuracies(accuracies):
+    x_axis = np.arange(len(accuracies), dtype='float32')
+    plt.plot(x_axis, np.array(accuracies))
+    plt.show()
 
 if __name__ == '__main__':
 
@@ -33,9 +23,10 @@ if __name__ == '__main__':
     mode = Mode.lstm
 
     # file locations
-    dict_file = './data/dictionary/dict.vec'
-    doc_files = utilities.generateFilePaths('./data/documents/test_', 3, '.txt')
-    vec_files = utilities.generateFilePaths('./data/vectors/vec_',    3, '.vec')
+    label_file = './data/labels/labels.txt'
+    dict_file  = './data/dictionary/dict.vec'
+    doc_files  = utilities.generateFilePaths('./data/documents/test_', 3, '.txt')
+    vec_files  = utilities.generateFilePaths('./data/vectors/vec_',    3, '.vec')
 
 
     if mode == Mode.word2vec:
@@ -57,16 +48,24 @@ if __name__ == '__main__':
     if mode == Mode.conversion:
 
         # convert documents into vector representation and save to different file location
-        documentVectorisation(doc_files, vec_files, dict_file, debug=False)
+        utilities.documentVectorisation(doc_files, vec_files, dict_file, debug=False)
 
 
     if mode == Mode.lstm:
 
-        dataReader = VectorDataset(vec_files)
-        model = LSTM(308, 32)
+        max_doc_len = utilities.getMaxDocumentLength(dict_file)
 
-        for vector_doc in dataReader:
-            print(vector_doc.shape)
-            hs, _ = model(vector_doc)
-            exit(0)
+        # lstm training parameters
+        lstm = LSTMTrainer(vec_files,
+                           label_file,
+                           learning_rate=0.1,
+                           input_dim=max_doc_len,
+                           hidden_dim=128,
+                           layer_dim=1,
+                           output_dim=3)
 
+        # train lstm
+        accuracies = lstm.train(num_epochs=100, seq_dim=10)
+
+        # plot accuracies
+        plotAccuracies(accuracies)

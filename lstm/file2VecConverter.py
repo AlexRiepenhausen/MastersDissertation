@@ -13,6 +13,7 @@ class File2VecConverter:
         self.doc_file_paths = doc_file_paths
         self.dict_file_path = dict_file_path
 
+        self.num_vec_req = 0
         self.num_vectors = 0
         self.vector_size = 0
 
@@ -28,6 +29,7 @@ class File2VecConverter:
 
         self.num_vectors = np.int_(lines[0].split()[0])
         self.vector_size = np.int_(lines[0].split()[1])
+        self.num_vec_req = np.int_(lines[0].split()[2])
 
         vector_dict = dict()
         for i in range(1,self.num_vectors+1):
@@ -64,8 +66,14 @@ class File2VecConverter:
             vectors = self.vecToLine(file)
 
             with open(vec_files[count], 'w') as f:
+
                 for i in range(0,len(vectors)):
-                    f.write(str(vectors[i]) + '\n')
+                    f.write(str(vectors[i]).replace("'", "").replace(", ", " ").replace("[", "").replace("]", "")+'\n')
+
+                # padding at the end if number of vectors smaller than the maximum document size
+                if len(vectors) < self.num_vec_req:
+                    for i in range(len(vectors), self.num_vec_req):
+                        f.write(str(np.zeros(self.vector_size)).replace("[", "").replace("]", "") + '\n')
 
             count += 1
         print("Done")

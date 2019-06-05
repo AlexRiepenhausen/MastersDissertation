@@ -11,36 +11,44 @@ class DataReader:
     def __init__(self, file_paths, min_count):
 
         self.negatives = []
-        self.discards = []
-        self.negpos = 0
+        self.discards  = []
+        self.negpos    = 0
 
-        self.word2id = dict()
-        self.id2word = dict()
-        self.sentences_count = 0
-        self.token_count = 0
+        self.word2id        = dict()
+        self.id2word        = dict()
         self.word_frequency = dict()
+
+        self.sentences_count    = 0
+        self.token_count        = 0
+        self.max_num_words_file = 0
 
         self.file_paths = file_paths
         self.readWords(min_count)
         self.initTableNegatives()
         self.initTableDiscards()
 
+
     # read words and create word2id and id2word lookup tables
     def readWords(self, min_count):
         print("Setting up word2vec training")
         word_frequency = dict()
         for file in self.file_paths:
+            word_count = 0
             for line in open(file, encoding="utf8"):
                 line = utilities.parseLine(line).split()
                 if len(line) > 1:
                     self.sentences_count += 1
                     for word in line:
+                        word_count += 1
                         if len(word) > 0:
                             self.token_count += 1
                             word_frequency[word] = word_frequency.get(word, 0) + 1
 
                             if self.token_count % 1000000 == 0:
                                 print("Read " + str(int(self.token_count / 1000000)) + "M words.")
+
+            if word_count > self.max_num_words_file:
+                self.max_num_words_file = word_count
 
         wid = 0
         for w, c in word_frequency.items():

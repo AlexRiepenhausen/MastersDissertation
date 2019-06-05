@@ -30,6 +30,7 @@ class Word2VecTrainer:
         if self.use_cuda:
             self.skip_gram_model.cuda()
 
+
     def train(self):
 
         for iteration in tqdm(range(self.iterations)):
@@ -55,4 +56,4 @@ class Word2VecTrainer:
                     if i > 0 and i % 500 == 0:
                         print(" Loss: " + str(running_loss))
 
-        self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)
+        self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name, self.data.max_num_words_file)
