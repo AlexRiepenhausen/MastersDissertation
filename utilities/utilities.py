@@ -1,4 +1,8 @@
 import re
+import csv
+import datetime
+import numpy as np
+import os
 from string import punctuation
 from lstm.file2VecConverter import File2VecConverter
 from lstm.dataReaderVec import VectorDataset
@@ -53,3 +57,36 @@ def getMaxDocumentLength(dict_file):
     with open(dict_file,'r') as f:
         header = f.readline()
         return int(header.split()[2])
+
+
+# saves accuracy measures obtained during training to csv file
+def writeAccuraciesToCSV(accuracies, filename):
+    x_axis = np.arange(len(accuracies))
+    with open(filename, mode='w', newline='') as csv_file:
+        accuracy_writer = csv.writer(csv_file, delimiter=',')
+        for i in range(0, len(accuracies)):
+            accuracy_writer.writerow([x_axis[i],accuracies[i]])
+
+
+# reads accuracy value from csv; needed for plotting a graph with matplotlib
+def readAccuraciesFromCSV(filename):
+    x_axis = list()
+    y_axis = list()
+    with open(filename, mode='r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for line in csv_reader:
+            x_axis.append(int(line[0]))
+            y_axis.append(float(line[1]))
+
+    return x_axis, y_axis
+
+
+# generates time stamp
+def timeStampedFileName():
+    fmt = '%Y_%m_%d_%H_%M_%S'
+    return datetime.datetime.now().strftime(fmt)
+
+
+# returns names of all files in given directory
+def getFilesInDirectory(directory):
+    return os.listdir(directory)

@@ -27,6 +27,12 @@ class LSTMTrainer:
         self.train_loader = VectorDataset(vec_files, label_file)
         self.test_loader   = VectorDataset(vec_files, label_file) # identical to train_loader for now
 
+        self.to_string = "lr_{}_in_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
+                                                                 input_dim,
+                                                                 hidden_dim,
+                                                                 layer_dim,
+                                                                 output_dim)
+
 
     def evaluateModel(self,i,seq_dim):
 
@@ -50,14 +56,17 @@ class LSTMTrainer:
 
             if torch.cuda.is_available():
                 _, label = torch.max(label,0)
-                correct += (predicted.cpu() == label.cpu()).sum()
+                if predicted.cpu() == label.cpu():
+                    correct += 1
             else:
-                correct += (predicted == label).sum()
+                _, label = torch.max(label,0)
+                if predicted == label:
+                    correct += 1
 
-            if j % 100 == 0 and j > 0:
-                break
+            if j % 99 == 0 and j > 0:
+                return float(correct) / float(total)
 
-        return 100 * correct / total
+
 
 
     def train(self, num_epochs, seq_dim):
@@ -96,7 +105,7 @@ class LSTMTrainer:
 
                 loss_list.append(loss.item())
 
-                if i % 1000 == 0:
+                if i % 100 == 0:
                     accuracies.append(self.evaluateModel(i,seq_dim))
                     break
 
