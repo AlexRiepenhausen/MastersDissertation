@@ -7,12 +7,16 @@ from torch.autograd import Variable
 
 class LSTMTrainer:
 
-    def __init__(self, vec_files, label_file, learning_rate, input_dim, hidden_dim, layer_dim, output_dim):
+    def __init__(self, vec_files, label_file, learning_rate, iterations_per_epoch,
+                 input_dim, seq_dim, hidden_dim, layer_dim, output_dim):
 
         self.input_dim  = input_dim
+        self.seq_dim    = seq_dim
         self.hidden_dim = hidden_dim
         self.layer_dim  = layer_dim
         self.output_dim = output_dim
+
+        self.iterations_per_epoch = iterations_per_epoch
 
         self.model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
 
@@ -24,26 +28,30 @@ class LSTMTrainer:
         self.learning_rate = learning_rate
         self.optimiser = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
 
-        self.train_loader = VectorDataset(vec_files, label_file)
-        self.test_loader   = VectorDataset(vec_files, label_file) # identical to train_loader for now
+        self.train_loader = VectorDataset(vec_files, label_file, seq_dim)
+        self.test_loader  = VectorDataset(vec_files, label_file, seq_dim) # identical to train_loader for now
 
-        self.to_string = "lr_{}_in_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
-                                                                 input_dim,
-                                                                 hidden_dim,
-                                                                 layer_dim,
-                                                                 output_dim)
+        self.to_string = "lr_{}_ipe_{}_in_{}_sq_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
+                                                                       iterations_per_epoch,
+                                                                       input_dim,
+                                                                       seq_dim,
+                                                                       hidden_dim,
+                                                                       layer_dim,
+                                                                       output_dim)
 
 
-    def evaluateModel(self,i,seq_dim):
+    def evaluateModel(self):
 
         correct = 0
         total = 0
         for j, (vector_doc, label) in enumerate(self.test_loader):
 
             if torch.cuda.is_available():
-                vector_doc = Variable(vector_doc.view(-1, seq_dim, self.input_dim).cuda())
+                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
+                label = Variable(label.cuda())
             else:
-                vector_doc = Variable(vector_doc.view(-1, seq_dim, self.input_dim))
+                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
+                label = Variable(label)
 
             # Forward pass only to get logits/output
             outputs = self.model(vector_doc)
@@ -55,34 +63,31 @@ class LSTMTrainer:
             total += 1
 
             if torch.cuda.is_available():
-                _, label = torch.max(label,0)
-                if predicted.cpu() == label.cpu():
+                #print("Predicted: {} Label: {}".format(predicted.cpu(),label.squeeze(dim=0).cpu()))
+                if predicted.cpu() == label.squeeze(dim=0).cpu():
                     correct += 1
             else:
-                _, label = torch.max(label,0)
-                if predicted == label:
+                if predicted.cpu() == label.squeeze(dim=0).cpu():
                     correct += 1
 
             if j % 99 == 0 and j > 0:
                 return float(correct) / float(total)
 
 
+    def train(self, num_epochs, compute_accuracies):
 
-
-    def train(self, num_epochs, seq_dim):
-
+        losses     = []
         accuracies = []
+        parcel     = []
 
         for epoch in tqdm(range(num_epochs)):
             for i, (vector_doc, label) in enumerate(self.train_loader):
 
-                loss_list = []
-
                 if torch.cuda.is_available():
-                    vector_doc = Variable(vector_doc.view(-1, seq_dim, self.input_dim).cuda())
+                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
                     label      = Variable(label.cuda())
                 else:
-                    vector_doc = Variable(vector_doc.view(-1, seq_dim, self.input_dim))
+                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
                     label      = Variable(label)
 
                 # Clear gradients w.r.t. parameters
@@ -93,7 +98,8 @@ class LSTMTrainer:
                 outputs = self.model(vector_doc)
 
                 # Calculate Loss: softmax --> cross entropy loss
-                loss = self.criterion(outputs.view(-1,1), label)
+                loss = self.criterion(outputs.unsqueeze(dim=0), label)
+                #print("Loss {} for {} with label being {}".format(loss.item(), outputs.unsqueeze(dim=0), label))
 
                 if torch.cuda.is_available():
                     loss.cuda()
@@ -103,10 +109,25 @@ class LSTMTrainer:
                 # Updating parameters
                 self.optimiser.step()
 
-                loss_list.append(loss.item())
-
-                if i % 100 == 0:
-                    accuracies.append(self.evaluateModel(i,seq_dim))
+                # save losses and accuracies every self.iterations_per_epoch
+                if self.runEvaluation(i):
+                    losses.append(loss.item())
+                    if compute_accuracies==True:
+                        accuracies.append(self.evaluateModel())
                     break
 
-        return accuracies
+        parcel.append(losses)
+        if compute_accuracies == True:
+            parcel.append(accuracies)
+
+        return parcel
+
+
+    # check if it is necessary to run evaluation of accuracy
+    def runEvaluation(self,iter):
+        if self.iterations_per_epoch == 1:
+            return True
+        else:
+            if iter % (self.iterations_per_epoch - 1) == 0 and iter > 0:
+                return True
+            return False

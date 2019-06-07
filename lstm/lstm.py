@@ -43,7 +43,7 @@ class LSTMModel(nn.Module):
         out = outs[-1].squeeze()
 
         out = self.fc(out)
-        # out.size() --> 100, 10
+
         return out
 
 

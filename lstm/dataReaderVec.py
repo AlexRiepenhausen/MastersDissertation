@@ -4,11 +4,12 @@ from torch.utils.data import Dataset
 
 class VectorDataset(Dataset):
 
-    def __init__(self, file_paths, label_file, batch_size=1):
+    def __init__(self, file_paths, label_file, seq_dim, batch_size=1):
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
         self.batch_size = batch_size
         self.labels     = self.initLabels(label_file)
+        self.seq_dim    = seq_dim
 
 
     # save labels of every document so that they are readily accessible
@@ -17,8 +18,8 @@ class VectorDataset(Dataset):
         labels = list()
         file = open(label_file, 'r', encoding='utf8')
         for line in file:
-            arr = np.fromstring(line.replace("\n",""), dtype=float,sep=", ")
-            labels.append(arr)
+            item = line.replace("\n","")
+            labels.append(int(item))
 
         return np.asarray(labels)
 
@@ -33,9 +34,9 @@ class VectorDataset(Dataset):
         file   = open(self.file_paths[randindex], 'r', encoding='utf8')
 
         vectors   = list()
-        for line in file:
-            arr = np.fromstring(line, dtype=float, sep=" ")
+        for i in range(0, self.seq_dim):
+            arr = np.fromstring(file.readline(), dtype=float, sep=" ")
             vectors.append(arr)
 
-        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor(self.labels[randindex]).long()
+        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor([self.labels[randindex]]).long()
 

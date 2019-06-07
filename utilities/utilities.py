@@ -60,12 +60,12 @@ def getMaxDocumentLength(dict_file):
 
 
 # saves accuracy measures obtained during training to csv file
-def writeAccuraciesToCSV(accuracies, filename):
-    x_axis = np.arange(len(accuracies))
+def writeDataToCSV(data, filename):
+    x_axis = np.arange(len(data))
     with open(filename, mode='w', newline='') as csv_file:
         accuracy_writer = csv.writer(csv_file, delimiter=',')
-        for i in range(0, len(accuracies)):
-            accuracy_writer.writerow([x_axis[i],accuracies[i]])
+        for i in range(0, len(data)):
+            accuracy_writer.writerow([x_axis[i],data[i]])
 
 
 # reads accuracy value from csv; needed for plotting a graph with matplotlib
@@ -90,3 +90,18 @@ def timeStampedFileName():
 # returns names of all files in given directory
 def getFilesInDirectory(directory):
     return os.listdir(directory)
+
+
+# write accuracies and losses
+def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir):
+
+    timestamp = timeStampedFileName()
+
+    losses = parcel[0]
+    lss_csv_file = csv_losses_dir + 'lss_' + lstm_info + '_date_' + timestamp + '.csv'
+    writeDataToCSV(losses, lss_csv_file)
+
+    if len(parcel) == 2:
+        accuracies   = parcel[1]
+        acc_csv_file = csv_accuracies_dir + 'acc_' + lstm_info + '_date_' + timestamp + '.csv'
+        writeDataToCSV(accuracies, acc_csv_file)

@@ -1,27 +1,28 @@
 from utilities import utilities
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 
 
 # populate graph with information in accuracy data
-def populateGraph(accuracy_data):
-    num_elements = len(accuracy_data[0])
+def populateGraph(data, y_axis_range, y_axis_name, iter_per_epoch=1):
+    num_elements = len(data[0])
     plt.figure(num='None',figsize=(10.5,5))
-    line = plt.plot(np.array(accuracy_data[0]), np.array(accuracy_data[1]))
+    plt.plot(np.array(data[0]), np.array(data[1]))
     plt.grid(True)
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Accuracy in Percent')
-    plt.ylim([0.0, 1.0])
-    plt.xlim([0.0, num_elements-1])
-    plt.locator_params(axis='y', nbins=20,tight=None)
+    plt.xlabel('Number of Epochs (epoch={} iterations)'.format(iter_per_epoch))
+    plt.ylabel(y_axis_name)
+    plt.ylim(y_axis_range)
+    plt.xlim([0.0, num_elements])
+    plt.locator_params(axis='y', nbins=22,tight=None)
     plt.minorticks_on()
     plt.grid(linewidth='1')
 
 
 # take csv files with accuracy data, convert to graphical representation and save to specified directory
-def convertCsvToGraphs(accuracy_dir, graphs_dir):
+def convertCsvToGraphs(csv_dir, graphs_dir, y_axis_range, y_axis_name):
 
-    all_csv_files   = utilities.getFilesInDirectory(accuracy_dir)
+    all_csv_files   = utilities.getFilesInDirectory(csv_dir)
     existing_graphs = utilities.getFilesInDirectory(graphs_dir)
     num_csv_files   = len(all_csv_files)
 
@@ -35,11 +36,10 @@ def convertCsvToGraphs(accuracy_dir, graphs_dir):
 
     # convert targets, i.e. those file that have not been converted yet
     for target in remaining_targets:
-        csv_file   = accuracy_dir + target + '.csv'
-        graph_file = graphs_dir   + target + '.jpg'
-
+        csv_file   = csv_dir    + target + '.csv'
+        graph_file = graphs_dir + target + '.jpg'
         accuracy_data = utilities.readAccuraciesFromCSV(csv_file)
-        populateGraph(accuracy_data)
+        populateGraph(accuracy_data, y_axis_range, y_axis_name, int(iterPerEpoch(target)))
         plt.savefig(graph_file)
         plt.clf()
 
@@ -50,15 +50,21 @@ def convertCsvToGraphs(accuracy_dir, graphs_dir):
 
 
 # merge all graphs in directory
-def mergeAllGraphs(accuracy_dir, merge_dir):
+def mergeAllGraphs(accuracy_dir, merge_dir, y_axis_range, y_axis_name):
 
     all_csv_files = utilities.getFilesInDirectory(accuracy_dir)
     num_csv_files = len(all_csv_files)
 
     for i in range(0, num_csv_files):
         accuracy_data = utilities.readAccuraciesFromCSV(accuracy_dir + all_csv_files[i])
-        populateGraph(accuracy_data)
+        populateGraph(accuracy_data, y_axis_range, y_axis_name)
 
     merge_file = merge_dir + utilities.timeStampedFileName() + '.jpg'
     plt.savefig(merge_file)
     print("Created new graph '{}' from {} csv files".format(merge_file, num_csv_files))
+
+
+# find _ipe_ and get the number after (ipe = iterations per epoch)
+def iterPerEpoch(string):
+    substr = re.search('_ipe_(.+?)_', string).group(0)
+    return substr.replace("_ipe_","").replace("_","")
