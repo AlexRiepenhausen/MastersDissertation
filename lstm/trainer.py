@@ -81,6 +81,9 @@ class LSTMTrainer:
         parcel     = []
 
         for epoch in tqdm(range(num_epochs)):
+
+            avg_loss = 0.0
+
             for i, (vector_doc, label) in enumerate(self.train_loader):
 
                 if torch.cuda.is_available():
@@ -109,9 +112,11 @@ class LSTMTrainer:
                 # Updating parameters
                 self.optimiser.step()
 
+                avg_loss += loss.item()
+
                 # save losses and accuracies every self.iterations_per_epoch
                 if self.runEvaluation(i):
-                    losses.append(loss.item())
+                    losses.append(avg_loss/self.iterations_per_epoch)
                     if compute_accuracies==True:
                         accuracies.append(self.evaluateModel())
                     break
