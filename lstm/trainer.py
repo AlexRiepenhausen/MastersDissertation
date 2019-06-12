@@ -63,7 +63,6 @@ class LSTMTrainer:
             total += 1
 
             if torch.cuda.is_available():
-                #print("Predicted: {} Label: {}".format(predicted.cpu(),label.squeeze(dim=0).cpu()))
                 if predicted.cpu() == label.squeeze(dim=0).cpu():
                     correct += 1
             else:
@@ -102,7 +101,6 @@ class LSTMTrainer:
 
                 # Calculate Loss: softmax --> cross entropy loss
                 loss = self.criterion(outputs.unsqueeze(dim=0), label)
-                #print("Loss {} for {} with label being {}".format(loss.item(), outputs.unsqueeze(dim=0), label))
 
                 if torch.cuda.is_available():
                     loss.cuda()

@@ -1,5 +1,6 @@
 import re
 import csv
+import time
 import datetime
 import numpy as np
 import os
@@ -84,6 +85,7 @@ def readAccuraciesFromCSV(filename):
 # generates time stamp
 def timeStampedFileName():
     fmt = '%Y_%m_%d_%H_%M_%S'
+    time.sleep(1.1) # -> make sure no equivalent time stamp is given out
     return datetime.datetime.now().strftime(fmt)
 
 
@@ -92,16 +94,16 @@ def getFilesInDirectory(directory):
     return os.listdir(directory)
 
 
-# write accuracies and losses
-def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir):
+# write lstm or word2vec accuracies and losses to csv
+def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir=None):
 
     timestamp = timeStampedFileName()
 
-    losses = parcel[0]
+    losses = parcel[0] if csv_accuracies_dir else parcel
     lss_csv_file = csv_losses_dir + 'lss_' + lstm_info + '_date_' + timestamp + '.csv'
     writeDataToCSV(losses, lss_csv_file)
 
-    if len(parcel) == 2:
+    if csv_accuracies_dir:
         accuracies   = parcel[1]
         acc_csv_file = csv_accuracies_dir + 'acc_' + lstm_info + '_date_' + timestamp + '.csv'
         writeDataToCSV(accuracies, acc_csv_file)
@@ -128,6 +130,7 @@ def readVectorsDict(dict_file_path, reverse=False):
             vector_dict[key] = vector[0]
 
     return vector_dict, (num_vectors, vector_size, num_vec_req)
+
 
 # returns the vector in form of a parsed string, which is then used as the reverse ditionary key
 def getReverseDictKey(vector):

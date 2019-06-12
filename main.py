@@ -21,51 +21,60 @@ class VecTrain(IntEnum):
 if __name__ == '__main__':
 
     # set mode of operation
-    mode = Mode.word2vec
+    mode = Mode.plot
 
-    # file locations
-    label_file   = './data/labels/labels.txt'
+    # lstm training data
+    label_file = './data/lstm/training/labels/labels.txt'
+    vec_files  = utilities.generateFilePaths('./data/lstm/training/vectors/vec_', 3, '.vec')
 
-    docs_dict    = './data/dictionary/docs_dict.vec'
-    colour_dict  = './data/dictionary/colour_dict.vec'
-    repl_file    = './data/dictionary/colour_table.txt'
-    dict_file    = './data/dictionary/dict.vec'
+    # lstm training results
+    lstm_csv_acc_dir   = './data/lstm/performance/csv_accuracies/'
+    lstm_csv_lss_dir   = './data/lstm/performance/csv_losses/'
+    lstm_graph_acc_dir = './data/lstm/performance/graph_accuracies/'
+    lstm_graph_lss_dir = './data/lstm/performance/graph_losses/'
+    lstm_merged_dir    = './data/lstm/performance/graphs_merged/'
 
-    doc_files    = utilities.generateFilePaths('./data/documents/test_',  3, '.txt')
-    colour_files = utilities.generateFilePaths('./data/colours/colours_', 2, '.txt')
-    vec_files    = utilities.generateFilePaths('./data/vectors/vec_',     3, '.vec')
+    # word2vec training data dictionaries
+    docs_dict    = './data/w2v/training/dictionary/docs_dict.vec'
+    colour_dict  = './data/w2v/training/dictionary/colour_dict.vec'
+    repl_file    = './data/w2v/training/dictionary/colour_table.txt'
+    dict_file    = './data/w2v/training/dictionary/dict.vec'
 
-    # directories
-    csv_acc_dir   = './data/performance/csv_accuracies/'
-    csv_lss_dir   = './data/performance/csv_losses/'
-    graph_acc_dir = './data/performance/graph_accuracies/'
-    graph_lss_dir = './data/performance/graph_losses/'
-    merged_dir    = './data/performance/graphs_merged/'
+    # word2vec training raw documents
+    doc_files    = utilities.generateFilePaths('./data/w2v/training/documents/test_',  3, '.txt')
+    colour_files = utilities.generateFilePaths('./data/w2v/training/colours/colours_', 2, '.txt')
+
+    # word2vec training results
+    w2v_csv_lss_dir   = './data/w2v/performance/csv_losses/'
+    w2v_graph_lss_dir = './data/w2v/performance/graph_losses/'
+    w2v_merged_dir    = './data/w2v/performance/graphs_merged/'
+
 
     if mode == Mode.word2vec:
 
         # word2vec training parameters
-        w2v1 = Word2VecTrainer(primary_files=doc_files,
+        w2v0 = Word2VecTrainer(primary_files=doc_files,
                                emb_dimension=10,
                                batch_size=32,
                                window_size=5,
-                               iterations=50,
                                initial_lr=0.1,
                                min_count=1,
                                supporting_files=colour_files)
 
-        w2v2 = Word2VecTrainer(primary_files=doc_files,
+        w2v1 = Word2VecTrainer(primary_files=doc_files,
                                emb_dimension=10,
                                batch_size=32,
                                window_size=5,
-                               iterations=50,
                                initial_lr=0.1,
                                min_count=1,
                                supporting_files=colour_files)
 
         # train standard word2vec
-        w2v1.train(VecTrain.primary,   docs_dict)
-        w2v2.train(VecTrain.secondary, colour_dict)
+        parcel_0 = w2v0.train(VecTrain.primary, docs_dict, num_epochs=100)
+        parcel_1 = w2v1.train(VecTrain.secondary, colour_dict, num_epochs=100)
+
+        utilities.resultsToCSV(parcel_0, w2v0.toString(), w2v_csv_lss_dir)
+        utilities.resultsToCSV(parcel_1, w2v1.toString(), w2v_csv_lss_dir)
 
         mergeDictionaries = DictionaryMerger(docs_dict, colour_dict, repl_file, dict_file)
         mergeDictionaries.replaceVectors()
@@ -80,8 +89,6 @@ if __name__ == '__main__':
 
     if mode == Mode.lstm:
 
-        #max_doc_len = utilities.getMaxDocumentLength(dict_file)
-
         # lstm training parameters
         lstm = LSTMTrainer(vec_files,
                            label_file,
@@ -95,13 +102,15 @@ if __name__ == '__main__':
 
         # train lstm and write results to csv
         parcel = lstm.train(num_epochs=100, compute_accuracies=True)
-        utilities.resultsToCSV(parcel, lstm.to_string, csv_lss_dir, csv_acc_dir)
+        utilities.resultsToCSV(parcel, lstm.to_string, lstm_csv_lss_dir, lstm_csv_acc_dir)
 
 
     if mode == Mode.plot:
 
-        lss_y_range = [ 0.0, 2.0]
-        acc_y_range = [-0.1, 1.1]
+        w2v_lss_y_range  = [ 0.0, 4.0]
+        lstm_lss_y_range = [ 0.0, 2.0]
+        lstm_acc_y_range = [-0.1, 1.1]
 
-        plotgraphs.convertCsvToGraphs(csv_lss_dir, graph_lss_dir, lss_y_range, 'Cross Entropy Loss')
-        plotgraphs.convertCsvToGraphs(csv_acc_dir, graph_acc_dir, acc_y_range, 'Accuracy in Percent')
+        plotgraphs.convertCsvToGraphs(w2v_csv_lss_dir,   w2v_graph_lss_dir,  w2v_lss_y_range, 'Log-sigmoid loss')
+        plotgraphs.convertCsvToGraphs(lstm_csv_lss_dir, lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
+        plotgraphs.convertCsvToGraphs(lstm_csv_acc_dir, lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
