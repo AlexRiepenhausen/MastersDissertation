@@ -1,6 +1,7 @@
 import torch
 from utilities import utilities, plotgraphs
 from word2vec.trainer import Word2VecTrainer
+from word2vec.dictionaryMerger import DictionaryMerger
 from lstm.trainer import LSTMTrainer
 
 from enum import IntEnum
@@ -11,16 +12,28 @@ class Mode(IntEnum):
     lstm       = 2
     plot       = 3
 
+
+class VecTrain(IntEnum):
+    combined  = 0
+    primary   = 1
+    secondary = 2
+
 if __name__ == '__main__':
 
     # set mode of operation
-    mode = Mode.plot
+    mode = Mode.word2vec
 
     # file locations
-    label_file = './data/labels/labels.txt'
-    dict_file  = './data/dictionary/dict.vec'
-    doc_files  = utilities.generateFilePaths('./data/documents/test_', 3, '.txt')
-    vec_files  = utilities.generateFilePaths('./data/vectors/vec_',    3, '.vec')
+    label_file   = './data/labels/labels.txt'
+
+    docs_dict    = './data/dictionary/docs_dict.vec'
+    colour_dict  = './data/dictionary/colour_dict.vec'
+    repl_file    = './data/dictionary/colour_table.txt'
+    dict_file    = './data/dictionary/dict.vec'
+
+    doc_files    = utilities.generateFilePaths('./data/documents/test_',  3, '.txt')
+    colour_files = utilities.generateFilePaths('./data/colours/colours_', 2, '.txt')
+    vec_files    = utilities.generateFilePaths('./data/vectors/vec_',     3, '.vec')
 
     # directories
     csv_acc_dir   = './data/performance/csv_accuracies/'
@@ -29,21 +42,34 @@ if __name__ == '__main__':
     graph_lss_dir = './data/performance/graph_losses/'
     merged_dir    = './data/performance/graphs_merged/'
 
-
     if mode == Mode.word2vec:
 
         # word2vec training parameters
-        w2v = Word2VecTrainer(input_files=doc_files,
-                              output_file=dict_file,
-                              emb_dimension=10,
-                              batch_size=32,
-                              window_size=5,
-                              iterations=50000,
-                              initial_lr=0.1,
-                              min_count=1)
+        w2v1 = Word2VecTrainer(primary_files=doc_files,
+                               emb_dimension=10,
+                               batch_size=32,
+                               window_size=5,
+                               iterations=50,
+                               initial_lr=0.1,
+                               min_count=1,
+                               supporting_files=colour_files)
 
-        # train word2vec
-        w2v.train()
+        w2v2 = Word2VecTrainer(primary_files=doc_files,
+                               emb_dimension=10,
+                               batch_size=32,
+                               window_size=5,
+                               iterations=50,
+                               initial_lr=0.1,
+                               min_count=1,
+                               supporting_files=colour_files)
+
+        # train standard word2vec
+        w2v1.train(VecTrain.primary,   docs_dict)
+        w2v2.train(VecTrain.secondary, colour_dict)
+
+        mergeDictionaries = DictionaryMerger(docs_dict, colour_dict, repl_file, dict_file)
+        mergeDictionaries.replaceVectors()
+        mergeDictionaries.writeVectors()
 
 
     if mode == Mode.conversion:

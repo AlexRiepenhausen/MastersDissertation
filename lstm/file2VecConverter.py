@@ -13,9 +13,9 @@ class File2VecConverter:
         self.doc_file_paths = doc_file_paths
         self.dict_file_path = dict_file_path
 
-        self.num_vec_req = 0
-        self.num_vectors = 0
-        self.vector_size = 0
+        self.unique_vectors = 0
+        self.vector_size    = 0
+        self.num_vec_req    = 0
 
         self.vector_dict = self.readVectorsDict()
 
@@ -27,12 +27,12 @@ class File2VecConverter:
         for line in open(self.dict_file_path, encoding="utf8"):
             lines.append(line)
 
-        self.num_vectors = np.int_(lines[0].split()[0])
-        self.vector_size = np.int_(lines[0].split()[1])
-        self.num_vec_req = np.int_(lines[0].split()[2])
+        self.unique_vectors = np.int_(lines[0].split()[0])
+        self.vector_size    = np.int_(lines[0].split()[1])
+        self.num_vec_req    = np.int_(lines[0].split()[2])
 
         vector_dict = dict()
-        for i in range(1,self.num_vectors+1):
+        for i in range(1,self.unique_vectors+1):
             vector = lines[i].split()
             if not reverse:
                 vector_dict[vector[0]] = vector[1:]

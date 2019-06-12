@@ -8,7 +8,7 @@ np.random.seed(12345)
 class DataReader:
     NEGATIVE_TABLE_SIZE = 1e8
 
-    def __init__(self, file_paths, min_count):
+    def __init__(self, primary_files, min_count, supporting_files=None):
 
         self.negatives = []
         self.discards  = []
@@ -22,7 +22,11 @@ class DataReader:
         self.token_count        = 0
         self.max_num_words_file = 0
 
-        self.file_paths = file_paths
+        self.primary_files      = primary_files
+        self.supporting_files   = supporting_files
+
+        self.file_paths = primary_files if supporting_files is None else primary_files + supporting_files
+
         self.readWords(min_count)
         self.initTableNegatives()
         self.initTableDiscards()
@@ -47,7 +51,7 @@ class DataReader:
                             if self.token_count % 1000000 == 0:
                                 print("Read " + str(int(self.token_count / 1000000)) + "M words.")
 
-            if word_count > self.max_num_words_file:
+            if word_count > self.max_num_words_file and file in self.primary_files :
                 self.max_num_words_file = word_count
 
         wid = 0
@@ -86,10 +90,11 @@ class DataReader:
 # -----------------------------------------------------------------------------------------------------------------
 
 class Word2vecDataset(Dataset):
-    def __init__(self, data, window_size):
+    def __init__(self, data, window_size, custom_files=None):
         self.data        = data
         self.window_size = window_size
-        self.num_files   = len(data.file_paths)
+        self.files       = data.file_paths if custom_files is None else custom_files
+        self.num_files   = len(self.files)
 
     def __len__(self):
         return self.data.sentences_count
@@ -97,7 +102,7 @@ class Word2vecDataset(Dataset):
     def __getitem__(self, idx):
 
         findex = np.random.randint(low=0, high=self.num_files)
-        file   = open(self.data.file_paths[findex], 'r', encoding='utf8')
+        file   = open(self.files[findex], 'r', encoding='utf8')
 
         while True:
             line = file.readline()

@@ -105,3 +105,38 @@ def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir):
         accuracies   = parcel[1]
         acc_csv_file = csv_accuracies_dir + 'acc_' + lstm_info + '_date_' + timestamp + '.csv'
         writeDataToCSV(accuracies, acc_csv_file)
+
+
+# read file containing mapping of words to (pretrained) vectors
+def readVectorsDict(dict_file_path, reverse=False):
+
+    lines = []
+    for line in open(dict_file_path, encoding="utf8"):
+        lines.append(line)
+
+    num_vectors = np.int_(lines[0].split()[0])
+    vector_size = np.int_(lines[0].split()[1])
+    num_vec_req = np.int_(lines[0].split()[2])
+
+    vector_dict = dict()
+    for i in range(1,num_vectors+1):
+        vector = lines[i].split()
+        if not reverse:
+            vector_dict[vector[0]] = vector[1:]
+        if reverse:
+            key = getReverseDictKey(vector)
+            vector_dict[key] = vector[0]
+
+    return vector_dict, (num_vectors, vector_size, num_vec_req)
+
+# returns the vector in form of a parsed string, which is then used as the reverse ditionary key
+def getReverseDictKey(vector):
+
+    count = 0
+    for element in vector:
+        if len(element) > 5 and count > 0:
+            vector[count] = element[0:5]
+        count += 1
+    key = str(vector[1:]).replace("'", "").replace(",", "").replace(" ", "").replace("0", "")
+
+    return key
