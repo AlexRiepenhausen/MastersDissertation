@@ -2,14 +2,15 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from enum import IntEnum
 
 from word2vec.dataReaderDoc import DataReader, Word2vecDataset
 from word2vec.word2vec import SkipGramModel
 
+from utilities.utilities import weightInit
+
 class Word2VecTrainer:
-    def __init__(self, primary_files, emb_dimension=10, batch_size=32, window_size=5,
-                 initial_lr=0.001, min_count=1, supporting_files=None):
+    def __init__(self, primary_files, supporting_files=None,
+                 emb_dimension=10, batch_size=32, window_size=5, initial_lr=0.001, min_count=1):
 
         # the actual data
         self.data = DataReader(primary_files, min_count, supporting_files)
@@ -48,15 +49,23 @@ class Word2VecTrainer:
         return DataLoader(dataset, self.batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
 
 
+    # initialise/refresh weights of model
+    def weightInitialisation(self, init, saved_model_path=None):
+        if init == weightInit.fromScratch:
+            self.skip_gram_model.weight_init()
+        if init == weightInit.load:
+            self.skip_gram_model.load_state_dict(torch.load(saved_model_path))
+            self.skip_gram_model.eval()
+        if init == weightInit.inherit:
+            pass  # inherit from previous training session of the same class -> do nothing
+
+
     # train word2vec model
-    def train(self, training_files, output_file, num_epochs=100, retrain=True):
+    def train(self, training_files, output_file, num_epochs=100, init=weightInit.fromScratch, model_path=None):
 
         losses     = list()
         dataloader = self.initDataLoader(training_files)
-
-        # initialise/refresh weights of model
-        if retrain:
-            self.skip_gram_model.weight_init()
+        self.weightInitialisation(init, saved_model_path=model_path)
 
         for iteration in tqdm(range(num_epochs)):
 

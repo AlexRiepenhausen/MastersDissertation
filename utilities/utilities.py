@@ -4,9 +4,23 @@ import time
 import datetime
 import numpy as np
 import os
+import torch
 from string import punctuation
 from lstm.file2VecConverter import File2VecConverter
 from lstm.dataReaderVec import VectorDataset
+
+from enum import IntEnum
+
+class Mode(IntEnum):
+    word2vec   = 0
+    conversion = 1
+    lstm       = 2
+    plot       = 3
+
+class weightInit(IntEnum):
+    fromScratch = 0
+    load        = 1
+    inherit     = 2
 
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):
@@ -104,6 +118,10 @@ def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir=None):
     writeDataToCSV(losses, lss_csv_file)
 
     if csv_accuracies_dir:
+
+        if len(parcel) == 1:
+            return
+
         accuracies   = parcel[1]
         acc_csv_file = csv_accuracies_dir + 'acc_' + lstm_info + '_date_' + timestamp + '.csv'
         writeDataToCSV(accuracies, acc_csv_file)

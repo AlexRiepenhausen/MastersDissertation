@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
-from lstm.lstm import LSTMModel, LSTMCell
+from lstm.lstm import LSTMModel
 from tqdm import tqdm
 from lstm.dataReaderVec import VectorDataset
 from torch.autograd import Variable
+from utilities.utilities import weightInit
 
 class LSTMTrainer:
 
@@ -40,6 +41,17 @@ class LSTMTrainer:
                                                                        output_dim)
 
 
+    def initWeights(self, init, saved_model_path=None):
+        if init == weightInit.load:
+            self.model.load_state_dict(torch.load(saved_model_path))
+            self.model.eval()
+        elif init == weightInit.fromScratch:
+            pass  # -> already initialised
+        else:
+            print("Specified weight initialisation not supported. Stop.")
+            exit(0)
+
+
     def evaluateModel(self):
 
         correct = 0
@@ -73,11 +85,13 @@ class LSTMTrainer:
                 return float(correct) / float(total)
 
 
-    def train(self, num_epochs, compute_accuracies):
+    def train(self, num_epochs, compute_accuracies, init=weightInit.fromScratch, model_path=None):
 
         losses     = []
         accuracies = []
         parcel     = []
+
+        self.initWeights(init, saved_model_path=model_path)
 
         for epoch in tqdm(range(num_epochs)):
 
