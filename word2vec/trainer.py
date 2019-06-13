@@ -7,27 +7,12 @@ from enum import IntEnum
 from word2vec.dataReaderDoc import DataReader, Word2vecDataset
 from word2vec.word2vec import SkipGramModel
 
-class VecTrain(IntEnum):
-    combined  = 0
-    primary   = 1
-    secondary = 2
-
 class Word2VecTrainer:
     def __init__(self, primary_files, emb_dimension=10, batch_size=32, window_size=5,
                  initial_lr=0.001, min_count=1, supporting_files=None):
 
         # the actual data
         self.data = DataReader(primary_files, min_count, supporting_files)
-
-        # data sets with different target files
-        dataset = Word2vecDataset(self.data, window_size, custom_files=None)
-        primary = Word2vecDataset(self.data, window_size, custom_files=primary_files)
-        support = Word2vecDataset(self.data, window_size, custom_files=supporting_files)
-
-        # combined, main and secondary data loaders
-        self.dataloader    = DataLoader(dataset, batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
-        self.dataprimary   = DataLoader(primary, batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
-        self.datasecondary = DataLoader(support, batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
 
         # training hyperparameters
         self.emb_size       = len(self.data.word2id)
@@ -57,18 +42,21 @@ class Word2VecTrainer:
                                                                   self.window_size)
 
 
+    # tell the data loader to iterate over a specific set of files
+    def initDataLoader(self, training_files):
+        dataset = Word2vecDataset(self.data, self.window_size, custom_files=training_files)
+        return DataLoader(dataset, self.batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
+
+
     # train word2vec model
-    def train(self, train_mode, output_file, num_epochs=100):
+    def train(self, training_files, output_file, num_epochs=100, retrain=True):
 
-        dataloader = None
-        if train_mode == VecTrain.combined:
-            dataloader = self.dataloader
-        if train_mode == VecTrain.primary:
-            dataloader = self.dataprimary
-        if train_mode ==VecTrain.secondary:
-            dataloader = self.datasecondary
+        losses     = list()
+        dataloader = self.initDataLoader(training_files)
 
-        losses = list()
+        # initialise/refresh weights of model
+        if retrain:
+            self.skip_gram_model.weight_init()
 
         for iteration in tqdm(range(num_epochs)):
 

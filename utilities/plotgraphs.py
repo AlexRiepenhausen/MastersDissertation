@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 
-
 # populate graph with information in accuracy data
 def populateGraph(data, y_axis_range, y_axis_name, iter_per_epoch=1):
     num_elements = len(data[0])

@@ -16,11 +16,10 @@ class SkipGramModel(nn.Module):
         self.emb_dimension = emb_dimension
         self.u_embeddings  = nn.Embedding(emb_size, emb_dimension, sparse=True)
         self.v_embeddings  = nn.Embedding(emb_size, emb_dimension, sparse=True)
+        self.weight_init()
 
-        initrange = 1.0 / self.emb_dimension
-        init.uniform_(self.u_embeddings.weight.data, -initrange, initrange)
-        init.constant_(self.v_embeddings.weight.data, 0)
 
+    # run vector through word2vec shallow neural network
     def forward(self, pos_u, pos_v, neg_v):
         emb_u = self.u_embeddings(pos_u)
         emb_v = self.v_embeddings(pos_v)
@@ -36,6 +35,8 @@ class SkipGramModel(nn.Module):
 
         return torch.mean(score + neg_score)
 
+
+    # save the hidden layer values for every vector
     def save_embedding(self, id2word, file_name, max_num_words_file):
         embedding = self.u_embeddings.weight.cpu().data.numpy()
         with open(file_name, 'w') as f:
@@ -43,3 +44,11 @@ class SkipGramModel(nn.Module):
             for wid, w in id2word.items():
                 e = ' '.join(map(lambda x: str(x), embedding[wid]))
                 f.write('%s %s\n' % (w, e))
+
+
+    # initialise (or refresh) weights
+    def weight_init(self):
+        initrange = 1.0 / self.emb_dimension
+        init.uniform_(self.u_embeddings.weight.data, -initrange, initrange)
+        init.constant_(self.v_embeddings.weight.data, 0)
+
