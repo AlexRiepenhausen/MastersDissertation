@@ -4,6 +4,7 @@ from utilities.utilities import Mode, weightInit
 from word2vec.trainer import Word2VecTrainer
 from word2vec.dictionaryMerger import DictionaryMerger
 from lstm.trainer import LSTMTrainer
+from similarity.cosine import CosineSimilarity
 
 if __name__ == '__main__':
 
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     p = paths.Paths()
 
     # set mode of operation
-    mode       = Mode.plot
+    mode       = Mode.similarity
     save_model = False
 
     # models to be loaded
@@ -78,6 +79,13 @@ if __name__ == '__main__':
         if save_model:
             path = p.lstm_model_param + lstm.to_string + '_date_' + utilities.timeStampedFileName()
             torch.save(lstm.model.state_dict(), path)
+
+
+    if mode == Mode.similarity:
+        measure_similarity = CosineSimilarity(p.doc_files, p.dict_file, p.repl_file)
+        print(measure_similarity.key_similarities)
+        # p.sim_csv_dir
+        # p.sim_graph_dir
 
 
     if mode == Mode.plot:

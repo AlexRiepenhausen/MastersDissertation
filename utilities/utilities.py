@@ -1,10 +1,10 @@
+import torch
 import re
 import csv
 import time
 import datetime
 import numpy as np
 import os
-import torch
 from string import punctuation
 from lstm.file2VecConverter import File2VecConverter
 from lstm.dataReaderVec import VectorDataset
@@ -15,7 +15,8 @@ class Mode(IntEnum):
     word2vec   = 0
     conversion = 1
     lstm       = 2
-    plot       = 3
+    similarity = 3
+    plot       = 4
 
 class weightInit(IntEnum):
     fromScratch = 0
@@ -161,3 +162,11 @@ def getReverseDictKey(vector):
     key = str(vector[1:]).replace("'", "").replace(",", "").replace(" ", "").replace("0", "")
 
     return key
+
+
+# read the words to be replaced in the primary vector file
+def readKeyTable(replacement_table_file_path):
+    table = []
+    for line in open(replacement_table_file_path, encoding="utf8"):
+        table.append(line.replace("\n",""))
+    return table

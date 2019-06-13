@@ -13,34 +13,11 @@ class File2VecConverter:
         self.doc_file_paths = doc_file_paths
         self.dict_file_path = dict_file_path
 
-        self.unique_vectors = 0
-        self.vector_size    = 0
-        self.num_vec_req    = 0
+        self.vector_dict, params = utilities.readVectorsDict(dict_file_path)
 
-        self.vector_dict = self.readVectorsDict()
-
-
-    # read file containing mapping of words to (pretrained) vectors
-    def readVectorsDict(self,reverse=False):
-
-        lines = []
-        for line in open(self.dict_file_path, encoding="utf8"):
-            lines.append(line)
-
-        self.unique_vectors = np.int_(lines[0].split()[0])
-        self.vector_size    = np.int_(lines[0].split()[1])
-        self.num_vec_req    = np.int_(lines[0].split()[2])
-
-        vector_dict = dict()
-        for i in range(1,self.unique_vectors+1):
-            vector = lines[i].split()
-            if not reverse:
-                vector_dict[vector[0]] = vector[1:]
-            if reverse:
-                key = self.getReverseDictKey(vector)
-                vector_dict[key] = vector[0]
-
-        return vector_dict
+        self.unique_vectors = params[0]
+        self.vector_size    = params[1]
+        self.num_vec_req    = params[2]
 
 
     # returns the vector in form of a parsed string, which is then used as the reverse ditionary key

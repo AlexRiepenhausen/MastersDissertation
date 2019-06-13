@@ -35,3 +35,7 @@ class Paths():
         self.lstm_graph_lss_dir = './data/lstm/performance/graph_losses/'
         self.lstm_merged_dir    = './data/lstm/performance/graphs_merged/'
 
+        # similarity
+        self.sim_csv_dir   = './data/w2v/similarity/csv/'
+        self.sim_graph_dir = './data/w2v/similarity/graphs/'
+
