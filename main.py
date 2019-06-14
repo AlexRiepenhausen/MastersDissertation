@@ -82,10 +82,10 @@ if __name__ == '__main__':
 
 
     if mode == Mode.similarity:
+        path = p.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
         measure_similarity = CosineSimilarity(p.doc_files, p.dict_file, p.repl_file)
-        print(measure_similarity.key_similarities)
-        # p.sim_csv_dir
-        # p.sim_graph_dir
+        measure_similarity.angularDistancesToFile(path)
+        #p.sim_csv_dir
 
 
     if mode == Mode.plot:

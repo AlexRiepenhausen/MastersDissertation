@@ -1,7 +1,9 @@
 import numpy as np
+import math
 from numpy import dot
 from numpy.linalg import norm
 from utilities import utilities
+import scipy.misc as smp
 
 class CosineSimilarity():
 
@@ -14,9 +16,8 @@ class CosineSimilarity():
         self.all_dictionary, _ = utilities.readVectorsDict(dict_path)
         self.subset_dictionary = self.subsetDictFromDocs()
         self.key_dictionary    = self.getKeyDictionary()
-        self.key_similarities  = self.getCosineSimilarities()
 
-        #print(self.key_dictionary.keys())
+        self.distance_matrix   = self.getDistances()
 
 
     # looks vector up in word2vec dictionary and writes single line to file
@@ -47,32 +48,105 @@ class CosineSimilarity():
         return key_dict
 
 
-    # cosine similarity
-    def getCosineSimilarities(self):
+    # cosine similarity -> angular distance
+    def getDistances(self):
 
-        key_similarities = dict()
+        key_distances = dict()
 
         # compare key against all other keys in the key dictionary
-        for key0 in self.key_dictionary:
-            similarities = list()
-            for key1 in self.key_dictionary:
+        for key0 in self.subset_dictionary:
+            distances = dict()
+            for key1 in self.subset_dictionary:
                 if key0 == key1:
-                    similarities.append((key1, 1.0))
+                    distances[key1] = 1.0
                 else:
                     vec0, vec1 = self.itemToVec(key0, key1)
-                    cos_sim = dot(vec0, vec1) / (norm(vec0) * norm(vec1))
-                    similarities.append((key1, cos_sim))
-            key_similarities[key0] = similarities
+                    cos_sim = abs(dot(vec0, vec1)) / (norm(vec0) * norm(vec1))
+                    dist = 1 - math.acos(cos_sim)/math.pi
+                    distances[key1] = dist
+            key_distances[key0] = distances
 
-        return key_similarities
+        return key_distances
 
 
     # this parsing thing is a nightmare
     def itemToVec(self, key0, key1):
-        item0 = self.key_dictionary[key0]
-        item1 = self.key_dictionary[key1]
+        item0 = self.subset_dictionary[key0]
+        item1 = self.subset_dictionary[key1]
         vec0  = np.array(item0).astype(np.float)
         vec1  = np.array(item1).astype(np.float)
         return vec0, vec1
+
+
+    # writing the dictionary/matrix to file
+    def angularDistancesToFile(self, path):
+
+        matrix_header = self.getMatrixHeader()
+
+        width  = len(matrix_header) + 1
+        height = len(matrix_header) + 1
+
+        image = np.zeros((height+1, width+1), dtype=np.uint8)
+
+        self.defineImageBorders(image, height, width, matrix_header)
+
+        for i in range(1, height):
+            for j in range(1, width):
+                row = matrix_header[i-1]
+                col = matrix_header[j-1]
+                image[i][j] = int(self.distance_matrix[row][col]*255)
+
+
+        img = smp.toimage(image)
+        smp.imsave(path, img)
+
+
+    def defineImageBorders(self,image, height, width, matrix_header):
+
+        image[0][0] = 210
+        image[height][width] = 210
+
+        for i in range(0, height):
+            image[i][height] = 210
+            image[height][i] = 210
+
+        for i in range(1, height):
+            if matrix_header[i-1] in self.key_dictionary:
+                image[i][0] = 10
+                image[0][i] = 10
+            else:
+                image[i][0] = 210
+                image[0][i] = 210
+
+
+
+    def _getMatrixHeader(self):
+        matrix_header = list(self.key_dictionary.keys())
+        for key in self.subset_dictionary:
+            if key not in self.key_dictionary:
+                matrix_header.append(key)
+        return matrix_header
+
+    def getMatrixHeader(self):
+
+        matrix_header = list()
+        subset_dict_len = len(self.subset_dictionary)
+        key_dict_len    = len(list(self.key_dictionary.keys()))
+
+        count = 0
+
+        for key in self.subset_dictionary:
+            if key not in self.key_dictionary:
+                matrix_header.append(key)
+            count += 1
+
+            # put the keys (e.g. the colours that we trained on a different corpus) in the middle
+            if count == int((subset_dict_len - key_dict_len)/2):
+                matrix_header = matrix_header + list(self.key_dictionary.keys())
+
+        return matrix_header
+
+
+
 
 
