@@ -7,15 +7,20 @@ import scipy.misc as smp
 
 class CosineSimilarity():
 
-    def __init__(self, doc_path, dict_path, key_path):
+    def __init__(self, doc_path, dict_path, key_path=None):
 
         self.doc_path  = doc_path
         self.dict_path = dict_path
-        self.key_path  = key_path
+        self.key_path  = None
 
         self.all_dictionary, _ = utilities.readVectorsDict(dict_path)
         self.subset_dictionary = self.subsetDictFromDocs()
-        self.key_dictionary    = self.getKeyDictionary()
+        self.key_dictionary    = dict()
+
+        if key_path:
+            self.key_path       = key_path
+            self.key_dictionary = self.getKeyDictionary()
+
 
         self.distance_matrix   = self.getDistances()
 
@@ -51,22 +56,22 @@ class CosineSimilarity():
     # cosine similarity -> angular distance
     def getDistances(self):
 
-        key_distances = dict()
+        distance_matrix = dict()
 
-        # compare key against all other keys in the key dictionary
-        for key0 in self.subset_dictionary:
-            distances = dict()
-            for key1 in self.subset_dictionary:
-                if key0 == key1:
-                    distances[key1] = 1.0
+        # compare item against all other items in the key dictionary
+        for item0 in self.subset_dictionary:
+            distances_row = dict()
+            for item1 in self.subset_dictionary:
+                if item0 == item1:
+                    distances_row[item1] = 1.0
                 else:
-                    vec0, vec1 = self.itemToVec(key0, key1)
+                    vec0, vec1 = self.itemToVec(item0, item1)
                     cos_sim = abs(dot(vec0, vec1)) / (norm(vec0) * norm(vec1))
                     dist = 1 - math.acos(cos_sim)/math.pi
-                    distances[key1] = dist
-            key_distances[key0] = distances
+                    distances_row[item1] = dist
+            distance_matrix[item0] = distances_row
 
-        return key_distances
+        return distance_matrix
 
 
     # this parsing thing is a nightmare
@@ -95,7 +100,6 @@ class CosineSimilarity():
                 row = matrix_header[i-1]
                 col = matrix_header[j-1]
                 image[i][j] = int(self.distance_matrix[row][col]*255)
-
 
         img = smp.toimage(image)
         smp.imsave(path, img)

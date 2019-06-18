@@ -12,8 +12,8 @@ if __name__ == '__main__':
     p = paths.Paths()
 
     # set mode of operation
-    mode       = Mode.conversion
-    save_model = True
+    mode       = Mode.similarity
+    save_model = False
 
     # models to be loaded
     w2v_model  = p.w2v_model_param  + 'lr_0.1_bs_32_ipe_288_embs_459_embd_10_win_5_date_2019_06_13_15_06_14'
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
-        parcel_0 = w2v.train(p.doc_files, p.docs_dict, num_epochs=100)
+        parcel_0 = w2v.train(p.doc_files, p.dict_file, num_epochs=100)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     if mode == Mode.similarity:
         path = p.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
-        measure_similarity = CosineSimilarity(p.doc_files, p.dict_file, p.repl_file)
+        measure_similarity = CosineSimilarity(p.doc_files, p.dict_file)
         measure_similarity.angularDistancesToFile(path)
         #p.sim_csv_dir
 
