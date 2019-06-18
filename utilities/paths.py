@@ -1,4 +1,4 @@
-from utilities.utilities import generateFilePaths
+from utilities.utilities import generateFilePaths, readSpecifiedNumberOfFiles
 
 class Paths():
     def __init__(self):
@@ -15,6 +15,12 @@ class Paths():
         # word2vec training raw documents
         self.doc_files    = generateFilePaths('./data/w2v/training/documents/test_', 3, '.txt')
         self.colour_files = generateFilePaths('./data/w2v/training/colours/colours_', 2, '.txt')
+
+        #imdb data set
+        self.imdb_files_neg_train = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/train/neg/')
+        self.imdb_files_pos_train = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/train/pos/')
+        self.imdb_files_neg_test  = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/test/neg/')
+        self.imdb_files_pos_test  = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/test/pos/')
 
         # word2vec training results
         self.w2v_csv_lss_dir   = './data/w2v/performance/csv_losses/'
@@ -38,4 +44,5 @@ class Paths():
         # similarity
         self.sim_csv_dir = './data/w2v/similarity/csv/'
         self.sim_img_dir = './data/w2v/similarity/img/'
+
 

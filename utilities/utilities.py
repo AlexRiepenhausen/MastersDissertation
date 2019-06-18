@@ -26,8 +26,9 @@ class weightInit(IntEnum):
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):
     line = line.lower()
-    line = re.sub(r'\(.*?\)', '', line)
+    line = re.sub(r'\(.*?\)', '', line) #remove special characters
     line = ''.join([c for c in line if c not in punctuation])
+    line = re.sub(r'[^\x00-\x7f]', r'', line) #remove hex characters
     return line
 
 
@@ -170,3 +171,13 @@ def readKeyTable(replacement_table_file_path):
     for line in open(replacement_table_file_path, encoding="utf8"):
         table.append(line.replace("\n",""))
     return table
+
+
+# read the first x files in a directory
+def readSpecifiedNumberOfFiles(numFiles,path):
+    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+    for i in range(0,numFiles):
+        files[i] = path + files[i]
+
+    return files[0:numFiles]
