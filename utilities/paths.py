@@ -32,7 +32,7 @@ class Paths():
 
         # lstm training data
         self.label_file = './data/lstm/training/labels/labels.txt'
-        self.vec_files  = generateFilePaths('./data/lstm/training/vectors/vec_', 3, '.vec')
+        self.vec_files  = generateFilePaths('./data/lstm/training/vectors/vec_', 100, '.vec')
 
         # lstm training results
         self.lstm_csv_acc_dir   = './data/lstm/performance/csv_accuracies/'

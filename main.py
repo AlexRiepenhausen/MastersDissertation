@@ -22,15 +22,15 @@ if __name__ == '__main__':
     if mode == Mode.word2vec:
 
         # word2vec training parameters
-        w2v = Word2VecTrainer(primary_files=p.doc_files,
-                              emb_dimension=10,
+        w2v = Word2VecTrainer(primary_files=p.imdb_files_neg_train,
+                              emb_dimension=100,
                               batch_size=32,
                               window_size=5,
                               initial_lr=0.1,
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
-        parcel_0 = w2v.train(p.doc_files, p.dict_file, num_epochs=100)
+        parcel_0 = w2v.train(p.imdb_files_neg_train, p.dict_file, num_epochs=1000)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     if mode == Mode.conversion:
         # convert documents into vector representation and save to different file location
-        utilities.documentVectorisation(p.doc_files, p.vec_files, p.dict_file, debug=False)
+        utilities.documentVectorisation(p.imdb_files_neg_train, p.vec_files, p.dict_file, debug=False)
 
 
     if mode == Mode.lstm:
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     if mode == Mode.similarity:
         path = p.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
-        measure_similarity = CosineSimilarity(p.doc_files, p.dict_file)
+        measure_similarity = CosineSimilarity(p.imdb_files_neg_train, p.dict_file)
         measure_similarity.angularDistancesToFile(path)
         #p.sim_csv_dir
 

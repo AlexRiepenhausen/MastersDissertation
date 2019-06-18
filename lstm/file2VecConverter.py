@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from utilities import utilities
+from tqdm import tqdm
 
 ''' This class takes the original text files, converts each word into a vector specified by the word2vec dictionary
     and writes it to a new file location. This makes subsequent processing faster
@@ -38,7 +39,7 @@ class File2VecConverter:
 
         count = 0
         print("Writing vectors to files ...")
-        for file in self.doc_file_paths:
+        for file in tqdm(self.doc_file_paths):
 
             vectors = self.vecToLine(file)
 
@@ -47,13 +48,7 @@ class File2VecConverter:
                 for i in range(0,len(vectors)):
                     f.write(str(vectors[i]).replace("'", "").replace(", ", " ").replace("[", "").replace("]", "")+'\n')
 
-                # padding at the end if number of vectors smaller than the maximum document size
-                if len(vectors) < self.num_vec_req:
-                    for i in range(len(vectors), self.num_vec_req):
-                        f.write(str(np.zeros(self.vector_size)).replace("[", "").replace("]", "") + '\n')
-
             count += 1
-        print("Done")
 
 
     # looks vector up in word2vec dictionary and writes single line to file

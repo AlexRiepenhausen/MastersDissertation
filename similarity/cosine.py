@@ -4,6 +4,7 @@ from numpy import dot
 from numpy.linalg import norm
 from utilities import utilities
 import scipy.misc as smp
+from tqdm import tqdm
 
 class CosineSimilarity():
 
@@ -95,7 +96,7 @@ class CosineSimilarity():
 
         self.defineImageBorders(image, height, width, matrix_header)
 
-        for i in range(1, height):
+        for i in tqdm(range(1, height)):
             for j in range(1, width):
                 row = matrix_header[i-1]
                 col = matrix_header[j-1]
@@ -121,15 +122,6 @@ class CosineSimilarity():
             else:
                 image[i][0] = 210
                 image[0][i] = 210
-
-
-
-    def _getMatrixHeader(self):
-        matrix_header = list(self.key_dictionary.keys())
-        for key in self.subset_dictionary:
-            if key not in self.key_dictionary:
-                matrix_header.append(key)
-        return matrix_header
 
     def getMatrixHeader(self):
 
