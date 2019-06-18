@@ -12,8 +12,8 @@ if __name__ == '__main__':
     p = paths.Paths()
 
     # set mode of operation
-    mode       = Mode.similarity
-    save_model = False
+    mode       = Mode.conversion
+    save_model = True
 
     # models to be loaded
     w2v_model  = p.w2v_model_param  + 'lr_0.1_bs_32_ipe_288_embs_459_embd_10_win_5_date_2019_06_13_15_06_14'
@@ -23,7 +23,6 @@ if __name__ == '__main__':
 
         # word2vec training parameters
         w2v = Word2VecTrainer(primary_files=p.doc_files,
-                              supporting_files=p.colour_files,
                               emb_dimension=10,
                               batch_size=32,
                               window_size=5,
@@ -32,17 +31,9 @@ if __name__ == '__main__':
 
         # train standard word2vec -> train function outputs dictionary at the end
         parcel_0 = w2v.train(p.doc_files, p.docs_dict, num_epochs=100)
-        parcel_1 = w2v.train(p.colour_files, p.colour_dict, num_epochs=100,
-                             init=weightInit.load, model_path=w2v_model)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)
-        utilities.resultsToCSV(parcel_1, w2v.toString(), p.w2v_csv_lss_dir)
-
-        # replace colour vectors in main dictionary
-        mergeDictionaries = DictionaryMerger(p.docs_dict, p.colour_dict, p.repl_file, p.dict_file)
-        mergeDictionaries.replaceVectors()
-        mergeDictionaries.writeVectors()
 
         # save model if specified
         if save_model:

@@ -1,0 +1,10 @@
+# file types to be ignored #
+*.txt
+*.vec
+*.pyc
+*.jpg
+*.bmp
+*.csv
+*
+!/**/
+!*.*S
