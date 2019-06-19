@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from utilities import utilities
 from tqdm import tqdm
+from utilities.utilities import Vec
+import sys
 
 ''' This class takes the original text files, converts each word into a vector specified by the word2vec dictionary
     and writes it to a new file location. This makes subsequent processing faster
@@ -9,7 +11,7 @@ from tqdm import tqdm
 
 class File2VecConverter:
 
-    def __init__(self, doc_file_paths, dict_file_path):
+    def __init__(self, doc_file_paths, dict_file_path, unknown_vec):
 
         self.doc_file_paths = doc_file_paths
         self.dict_file_path = dict_file_path
@@ -19,6 +21,22 @@ class File2VecConverter:
         self.unique_vectors = params[0]
         self.vector_size    = params[1]
         self.num_vec_req    = params[2]
+
+        self.vec_replacement = self.unknownWordReplacement(unknown_vec)
+
+        self.num_unknown_words = 0
+        self.total_num_words = 0
+
+
+    def zeroVector(self):
+        string = "["
+        for i in range(0, self.vector_size):
+            string = string + "'0.0'"
+            if i < self.vector_size-1:
+                string = string + ", "
+
+        return string + "]"
+
 
 
     # returns the vector in form of a parsed string, which is then used as the reverse ditionary key
@@ -38,7 +56,7 @@ class File2VecConverter:
     def convertDocuments(self,vec_files):
 
         count = 0
-        print("Writing vectors to files ...")
+
         for file in tqdm(self.doc_file_paths):
 
             vectors = self.vecToLine(file)
@@ -50,6 +68,12 @@ class File2VecConverter:
 
             count += 1
 
+        percent_unknown_words = self.num_unknown_words*100/self.total_num_words
+        sys.stderr.flush()
+        print("\nTotal number of words {}, unknown words {}, percentage unknown words {}".format(self.total_num_words,
+                                                                                               self.num_unknown_words,
+                                                                                               percent_unknown_words))
+
 
     # looks vector up in word2vec dictionary and writes single line to file
     def vecToLine(self,file):
@@ -60,6 +84,17 @@ class File2VecConverter:
             if len(line) > 1:
                 for word in line:
                     if len(word) > 0:
-                        vectors.append(self.vector_dict[word])
+                        if word in self.vector_dict:
+                            vectors.append(self.vector_dict[word])
+                            self.total_num_words = self.total_num_words + 1
+                        else:
+                            vectors.append(self.zero_vec)
+                            self.num_unknown_words = self.num_unknown_words + 1
 
         return vectors
+
+
+    # decide how to come up with a vector for unknown words
+    def unknownWordReplacement(self, unknown_vec):
+        if unknown_vec == vec.zeroVec:
+            return self.zeroVector()

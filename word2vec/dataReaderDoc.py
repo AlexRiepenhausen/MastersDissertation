@@ -48,9 +48,6 @@ class DataReader:
                             self.token_count += 1
                             word_frequency[word] = word_frequency.get(word, 0) + 1
 
-                            if self.token_count % 1000000 == 0:
-                                print("Read " + str(int(self.token_count / 1000000)) + "M words.")
-
             if word_count > self.max_num_words_file and file in self.primary_files :
                 self.max_num_words_file = word_count
 
@@ -62,12 +59,16 @@ class DataReader:
             self.id2word[wid] = w
             self.word_frequency[wid] = c
             wid += 1
+
+        print("Read " + str(self.token_count) + " words.\n")
         print("Total embeddings: " + str(len(self.word2id))+ '\n')
+
 
     def initTableDiscards(self):
         t = 0.0001
         f = np.array(list(self.word_frequency.values())) / self.token_count
         self.discards = np.sqrt(t / f) + (t / f)
+
 
     # unigram distribution?
     def initTableNegatives(self):

@@ -1,7 +1,8 @@
-from utilities.utilities import generateFilePaths, readSpecifiedNumberOfFiles
+from utilities.utilities import generateFilePaths, readSpecifiedNumberOfFiles, copyFileNamesToDifferentPath
+from utilities.utilities import getLabelsFromFiles
 
 class Paths():
-    def __init__(self):
+    def __init__(self, training_samples, test_samples):
 
         # word2vec training data dictionaries
         self.docs_dict   = './data/w2v/training/dictionary/docs_dict.vec'
@@ -17,10 +18,11 @@ class Paths():
         self.colour_files = generateFilePaths('./data/w2v/training/colours/colours_', 2, '.txt')
 
         #imdb data set
-        self.imdb_files_neg_train = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/train/neg/')
-        self.imdb_files_pos_train = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/train/pos/')
-        self.imdb_files_neg_test  = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/test/neg/')
-        self.imdb_files_pos_test  = readSpecifiedNumberOfFiles(100, './data/w2v/training/aclImdb/test/pos/')
+        self.imdb_lbl_neg_train, self.imdb_files_neg_train = readSpecifiedNumberOfFiles(training_samples/2, './data/w2v/training/aclImdb/train/neg/')
+        self.imdb_lbl_pos_train, self.imdb_files_pos_train = readSpecifiedNumberOfFiles(training_samples/2, './data/w2v/training/aclImdb/train/pos/')
+        self.imdb_lbl_neg_test,  self.imdb_files_neg_test  = readSpecifiedNumberOfFiles(test_samples/2, './data/w2v/training/aclImdb/test/neg/')
+        self.imdb_lbl_pos_test,  self.imdb_files_pos_test  = readSpecifiedNumberOfFiles(test_samples/2, './data/w2v/training/aclImdb/test/pos/')
+
 
         # word2vec training results
         self.w2v_csv_lss_dir   = './data/w2v/performance/csv_losses/'
@@ -31,8 +33,18 @@ class Paths():
         self.lstm_model_param = './data/lstm/training/models/'
 
         # lstm training data
-        self.label_file = './data/lstm/training/labels/labels.txt'
-        self.vec_files  = generateFilePaths('./data/lstm/training/vectors/vec_', 100, '.vec')
+        self.vec_files_train = copyFileNamesToDifferentPath('./data/lstm/training/vectors_train/',
+                                                             self.imdb_files_neg_train + self.imdb_files_pos_train,
+                                                             '.vec')
+
+        self.vec_lbls_train = getLabelsFromFiles(self.vec_files_train, '.vec')
+
+        self.vec_files_test = copyFileNamesToDifferentPath('./data/lstm/training/vectors_test/',
+                                                            self.imdb_files_neg_test + self.imdb_files_pos_test,
+                                                            '.vec')
+
+        self.vec_lbls_test = getLabelsFromFiles(self.vec_files_test, '.vec')
+
 
         # lstm training results
         self.lstm_csv_acc_dir   = './data/lstm/performance/csv_accuracies/'

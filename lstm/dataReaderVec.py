@@ -4,25 +4,12 @@ from torch.utils.data import Dataset
 
 class VectorDataset(Dataset):
 
-    def __init__(self, file_paths, label_file, seq_dim, batch_size=1):
+    def __init__(self, file_paths, labels, seq_dim, batch_size=1):
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
         self.batch_size = batch_size
-        self.labels     = self.initLabels(label_file)
+        self.labels     = np.asarray(labels)
         self.seq_dim    = seq_dim
-
-
-    # save labels of every document so that they are readily accessible
-    def initLabels(self, label_file):
-
-        labels = list()
-        file = open(label_file, 'r', encoding='utf8')
-        for line in file:
-            item = line.replace("\n","")
-            labels.append(int(item))
-
-        return np.asarray(labels)
-
 
     def __len__(self):
         return self.num_files/self.batch_size

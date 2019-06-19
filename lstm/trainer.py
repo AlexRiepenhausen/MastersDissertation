@@ -8,7 +8,7 @@ from utilities.utilities import weightInit
 
 class LSTMTrainer:
 
-    def __init__(self, vec_files, label_file, learning_rate, iterations_per_epoch,
+    def __init__(self, train_files, train_labels, test_files, test_labels, learning_rate, iterations_per_epoch,
                  input_dim, seq_dim, hidden_dim, layer_dim, output_dim):
 
         self.input_dim  = input_dim
@@ -29,8 +29,8 @@ class LSTMTrainer:
         self.learning_rate = learning_rate
         self.optimiser = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
 
-        self.train_loader = VectorDataset(vec_files, label_file, seq_dim)
-        self.test_loader  = VectorDataset(vec_files, label_file, seq_dim) # identical to train_loader for now
+        self.train_loader = VectorDataset(train_files, train_labels, seq_dim)
+        self.test_loader  = VectorDataset(test_files, test_labels, seq_dim) # identical to train_loader for now
 
         self.to_string = "lr_{}_ipe_{}_in_{}_sq_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
                                                                        iterations_per_epoch,

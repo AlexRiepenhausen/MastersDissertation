@@ -23,6 +23,9 @@ class weightInit(IntEnum):
     load        = 1
     inherit     = 2
 
+class Vec(IntEnum):
+    zeroVec = 0
+
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):
     line = line.lower()
@@ -41,8 +44,8 @@ def generateFilePaths(path, number_of_docs, extension):
 
 
 # convert documents into vector representations and write them to files
-def documentVectorisation(doc_files, vec_files, dict_file, debug=False):
-    converter = File2VecConverter(doc_files, dict_file)
+def documentVectorisation(doc_files, vec_files, dict_file, unknown_vec, debug=False):
+    converter = File2VecConverter(doc_files, dict_file, unknown_vec)
     converter.convertDocuments(vec_files)
 
     if debug:
@@ -175,9 +178,48 @@ def readKeyTable(replacement_table_file_path):
 
 # read the first x files in a directory
 def readSpecifiedNumberOfFiles(numFiles,path):
-    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+    # numFiles has to be an integer value
+    numFiles = int(numFiles)
+
+    files  = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    labels = list()
 
     for i in range(0,numFiles):
+        labels.append(int(files[i].split('_',1)[1].replace('.txt','')))
         files[i] = path + files[i]
 
-    return files[0:numFiles]
+    return labels[0:numFiles], files[0:numFiles]
+
+
+def getLabelsFromFiles(files, extension):
+
+    labels = list()
+
+    for f in files:
+        chunks = f.split('/')
+        label  = chunks[len(chunks)-1].split('.')[0].split('_')[1]
+        labels.append(int(label))
+
+    return labels
+
+
+def copyFileNamesToDifferentPath(path, filenames, extension):
+    new_file_names = list()
+    for file in filenames:
+        chunks = file.split('/')
+        file_name = path + chunks[len(chunks)-1].split('.')[0] + extension
+        new_file_names.append(file_name)
+    return new_file_names
+
+
+# save labels of every document so that they are readily accessible
+def initLabels(self, label_file):
+
+    labels = list()
+    file = open(label_file, 'r', encoding='utf8')
+    for line in file:
+        item = line.replace("\n","")
+        labels.append(int(item))
+
+    return np.asarray(labels)
