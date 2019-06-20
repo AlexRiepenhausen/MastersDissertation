@@ -10,7 +10,7 @@ from utilities.utilities import weightInit
 
 class Word2VecTrainer:
     def __init__(self, primary_files, supporting_files=None,
-                 emb_dimension=10, batch_size=32, window_size=5, initial_lr=0.001, min_count=1):
+                 emb_dimension=10, batch_size=32, window_size=5, initial_lr=0.1, min_count=1):
 
         # the actual data
         self.data = DataReader(primary_files, min_count, supporting_files)
@@ -25,6 +25,10 @@ class Word2VecTrainer:
 
         # init model
         self.skip_gram_model = SkipGramModel(self.emb_size, self.emb_dimension)
+
+        if torch.cuda.device_count() > 1:
+            print("Using", torch.cuda.device_count(), "GPUs")
+            self.skip_gram_model = torch.nn.DataParallel(self.skip_gram_model)
 
         self.use_cuda = torch.cuda.is_available()
         self.device   = torch.device("cuda" if self.use_cuda else "cpu")

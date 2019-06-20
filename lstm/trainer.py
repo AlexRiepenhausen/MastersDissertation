@@ -21,6 +21,10 @@ class LSTMTrainer:
 
         self.model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
 
+        if torch.cuda.device_count() > 1:
+            print("Using", torch.cuda.device_count(), "GPUs")
+            self.model = torch.nn.DataParallel(self.model)
+
         if torch.cuda.is_available():
             self.model.cuda()
 
