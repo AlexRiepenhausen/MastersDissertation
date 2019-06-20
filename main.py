@@ -1,4 +1,5 @@
 import torch
+import time
 from utilities.utilities import Mode, weightInit, Vec
 from utilities import utilities, plotgraphs, paths
 from word2vec.trainer import Word2VecTrainer
@@ -7,11 +8,14 @@ from similarity.cosine import CosineSimilarity
 
 if __name__ == '__main__':
 
+    start   = time.time()
+    loading = start
+
     #init paths
     p = paths.Paths(training_samples=1000, test_samples=100)
 
     # set mode of operation
-    mode       = Mode.plot
+    mode       = Mode.word2vec
     save_model = False
 
     # models to be loaded
@@ -29,6 +33,7 @@ if __name__ == '__main__':
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
+        loading = time.time()
         parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=10)
 
         # write training results (learning curve) to csv
@@ -66,6 +71,7 @@ if __name__ == '__main__':
                            output_dim=10)
 
         # train lstm
+        loading = time.time()
         parcel = lstm.train(num_epochs=100, compute_accuracies=True)
 
         # write results to csv
@@ -93,3 +99,9 @@ if __name__ == '__main__':
         plotgraphs.convertCsvToGraphs(p.w2v_csv_lss_dir,   p.w2v_graph_lss_dir,  w2v_lss_y_range, 'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_lss_dir, p.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_acc_dir, p.lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
+
+    end = time.time()
+
+    print("Time needed for loading data {} seconds".format(round(loading - start)))
+    print("Time needed for processing {} seconds".format(round(end - loading)))
+    print("Total time {} seconds".format(round(end - start)))
