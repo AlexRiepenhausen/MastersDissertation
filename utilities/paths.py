@@ -17,12 +17,16 @@ class Paths():
         self.doc_files    = generateFilePaths('./data/w2v/training/documents/test_', 3, '.txt')
         self.colour_files = generateFilePaths('./data/w2v/training/colours/colours_', 2, '.txt')
 
-        #imdb data set
+        # word2vec training imdb
+        _, all_negatives_train = readSpecifiedNumberOfFiles(2500, './data/w2v/training/aclImdb/train/neg/')
+        _, all_positives_train = readSpecifiedNumberOfFiles(2500, './data/w2v/training/aclImdb/train/pos/')
+        self.all_files = all_negatives_train + all_positives_train
+
+        # lstm training set
         self.imdb_lbl_neg_train, self.imdb_files_neg_train = readSpecifiedNumberOfFiles(training_samples/2, './data/w2v/training/aclImdb/train/neg/')
         self.imdb_lbl_pos_train, self.imdb_files_pos_train = readSpecifiedNumberOfFiles(training_samples/2, './data/w2v/training/aclImdb/train/pos/')
         self.imdb_lbl_neg_test,  self.imdb_files_neg_test  = readSpecifiedNumberOfFiles(test_samples/2, './data/w2v/training/aclImdb/test/neg/')
         self.imdb_lbl_pos_test,  self.imdb_files_pos_test  = readSpecifiedNumberOfFiles(test_samples/2, './data/w2v/training/aclImdb/test/pos/')
-
 
         # word2vec training results
         self.w2v_csv_lss_dir   = './data/w2v/performance/csv_losses/'
@@ -34,13 +38,13 @@ class Paths():
 
         # lstm training data
         self.vec_files_train = copyFileNamesToDifferentPath('./data/lstm/training/vectors_train/',
-                                                             self.imdb_files_neg_train + self.imdb_files_pos_train,
+                                                             self.imdb_files_pos_train + self.imdb_files_neg_train,
                                                              '.vec')
 
         self.vec_lbls_train = getLabelsFromFiles(self.vec_files_train, '.vec')
 
         self.vec_files_test = copyFileNamesToDifferentPath('./data/lstm/training/vectors_test/',
-                                                            self.imdb_files_neg_test + self.imdb_files_pos_test,
+                                                            self.imdb_files_pos_test + self.imdb_files_neg_test,
                                                             '.vec')
 
         self.vec_lbls_test = getLabelsFromFiles(self.vec_files_test, '.vec')

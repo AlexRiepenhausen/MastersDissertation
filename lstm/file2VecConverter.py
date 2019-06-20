@@ -2,7 +2,6 @@ import torch
 import numpy as np
 from utilities import utilities
 from tqdm import tqdm
-from utilities.utilities import Vec
 import sys
 
 ''' This class takes the original text files, converts each word into a vector specified by the word2vec dictionary
@@ -15,6 +14,7 @@ class File2VecConverter:
 
         self.doc_file_paths = doc_file_paths
         self.dict_file_path = dict_file_path
+        self.unknown_vec    = unknown_vec
 
         self.vector_dict, params = utilities.readVectorsDict(dict_file_path)
 
@@ -22,7 +22,7 @@ class File2VecConverter:
         self.vector_size    = params[1]
         self.num_vec_req    = params[2]
 
-        self.vec_replacement = self.unknownWordReplacement(unknown_vec)
+        self.zeroVector = self.zeroVector()
 
         self.num_unknown_words = 0
         self.total_num_words = 0
@@ -36,7 +36,6 @@ class File2VecConverter:
                 string = string + ", "
 
         return string + "]"
-
 
 
     # returns the vector in form of a parsed string, which is then used as the reverse ditionary key
@@ -88,13 +87,17 @@ class File2VecConverter:
                             vectors.append(self.vector_dict[word])
                             self.total_num_words = self.total_num_words + 1
                         else:
-                            vectors.append(self.zero_vec)
+                            replacement = self.unknownWordReplacement()
+                            if replacement:
+                                vectors.append(replacement)
                             self.num_unknown_words = self.num_unknown_words + 1
 
         return vectors
 
 
     # decide how to come up with a vector for unknown words
-    def unknownWordReplacement(self, unknown_vec):
-        if unknown_vec == vec.zeroVec:
-            return self.zeroVector()
+    def unknownWordReplacement(self):
+        if self.unknown_vec == utilities.Vec.zeroVec:
+            return self.zeroVector
+        if self.unknown_vec == utilities.Vec.skipVec:
+            return None

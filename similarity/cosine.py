@@ -23,9 +23,6 @@ class CosineSimilarity():
             self.key_dictionary = self.getKeyDictionary()
 
 
-        self.distance_matrix   = self.getDistances()
-
-
     # looks vector up in word2vec dictionary and writes single line to file
     def subsetDictFromDocs(self):
 
@@ -55,24 +52,13 @@ class CosineSimilarity():
 
 
     # cosine similarity -> angular distance
-    def getDistances(self):
-
-        distance_matrix = dict()
-
-        # compare item against all other items in the key dictionary
-        for item0 in self.subset_dictionary:
-            distances_row = dict()
-            for item1 in self.subset_dictionary:
-                if item0 == item1:
-                    distances_row[item1] = 1.0
-                else:
-                    vec0, vec1 = self.itemToVec(item0, item1)
-                    cos_sim = abs(dot(vec0, vec1)) / (norm(vec0) * norm(vec1))
-                    dist = 1 - math.acos(cos_sim)/math.pi
-                    distances_row[item1] = dist
-            distance_matrix[item0] = distances_row
-
-        return distance_matrix
+    def getDistance(self, row, col):
+        if row == col:
+            return 255
+        vec0, vec1 = self.itemToVec(row, col)
+        cos_sim = abs(dot(vec0, vec1)) / (norm(vec0) * norm(vec1))
+        dist = 1 - math.acos(cos_sim) / math.pi
+        return dist
 
 
     # this parsing thing is a nightmare
@@ -100,7 +86,7 @@ class CosineSimilarity():
             for j in range(1, width):
                 row = matrix_header[i-1]
                 col = matrix_header[j-1]
-                image[i][j] = int(self.distance_matrix[row][col]*255)
+                image[i][j] = self.getDistance(row, col)
 
         img = smp.toimage(image)
         smp.imsave(path, img)

@@ -14,7 +14,6 @@ class VectorDataset(Dataset):
     def __len__(self):
         return self.num_files/self.batch_size
 
-
     def __getitem__(self, idx):
 
         randindex = np.random.randint(low=0, high=self.num_files)

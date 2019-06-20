@@ -92,9 +92,6 @@ class Word2VecTrainer:
                     running_loss = running_loss * 0.9 + loss.item() * 0.1
                     cumulative_loss += loss.item()
 
-                    if i > 0 and i % 500 == 0:
-                        print(" Loss: " + str(running_loss))
-
                     count += 1.0
 
             losses.append(cumulative_loss / count)

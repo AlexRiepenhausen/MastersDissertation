@@ -25,6 +25,7 @@ class weightInit(IntEnum):
 
 class Vec(IntEnum):
     zeroVec = 0
+    skipVec = 1
 
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):
