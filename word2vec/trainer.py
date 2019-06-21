@@ -104,6 +104,10 @@ class Word2VecTrainer:
             losses.append(cumulative_loss / count)
             self.iter_per_epoch = int(count * self.batch_size)
 
-        self.skip_gram_model.module.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
+        # write to vectors
+        if torch.cuda.device_count() > 1:
+            self.skip_gram_model.module.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
+        else:
+            self.skip_gram_model.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
 
         return losses

@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     # set mode of operation
     mode       = Mode.word2vec
-    save_model = False
+    save_model = True
 
     # models to be loaded
     # w2v_model  = p.w2v_model_param  + 'lr_0.1_bs_32_ipe_288_embs_459_embd_10_win_5_date_2019_06_13_15_06_14'
@@ -29,7 +29,7 @@ if __name__ == '__main__':
                               emb_dimension=100,
                               batch_size=32,
                               window_size=5,
-                              initial_lr=0.01,
+                              initial_lr=0.001,
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
