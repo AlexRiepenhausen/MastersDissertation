@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         # train standard word2vec -> train function outputs dictionary at the end
         loading = time.time()
-        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=10)
+        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=1)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)

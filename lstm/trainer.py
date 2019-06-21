@@ -21,13 +21,6 @@ class LSTMTrainer:
 
         self.model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
 
-        if torch.cuda.device_count() > 1:
-            print("Using", torch.cuda.device_count(), "GPUs")
-            self.model = torch.nn.DataParallel(self.model)
-
-        if torch.cuda.is_available():
-            self.model.cuda()
-
         self.criterion  = nn.CrossEntropyLoss()
 
         self.learning_rate = learning_rate
@@ -43,6 +36,15 @@ class LSTMTrainer:
                                                                        hidden_dim,
                                                                        layer_dim,
                                                                        output_dim)
+
+    def initDevice(self):
+
+        if torch.cuda.device_count() > 1:
+            print("Available GPUs: ", torch.cuda.device_count())
+            self.model = torch.nn.DataParallel(self.model)
+
+        if torch.cuda.is_available():
+            self.model.cuda()
 
 
     def initWeights(self, init, saved_model_path=None):
@@ -96,6 +98,7 @@ class LSTMTrainer:
         parcel     = []
 
         self.initWeights(init, saved_model_path=model_path)
+        self.initDevice()
 
         for epoch in tqdm(range(num_epochs)):
 
