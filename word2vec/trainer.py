@@ -25,16 +25,7 @@ class Word2VecTrainer:
 
         # init model
         self.skip_gram_model = SkipGramModel(self.emb_size, self.emb_dimension)
-
-        if torch.cuda.device_count() > 1:
-            print("Using", torch.cuda.device_count(), "GPUs")
-            self.skip_gram_model = torch.nn.DataParallel(self.skip_gram_model)
-
-        self.use_cuda = torch.cuda.is_available()
-        self.device   = torch.device("cuda" if self.use_cuda else "cpu")
-
-        if self.use_cuda:
-            self.skip_gram_model.cuda()
+        self.device          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
     # return string containing information about this training session
@@ -51,6 +42,16 @@ class Word2VecTrainer:
     def initDataLoader(self, training_files):
         dataset = Word2vecDataset(self.data, self.window_size, custom_files=training_files)
         return DataLoader(dataset, self.batch_size, shuffle=False, num_workers=0, collate_fn=dataset.collate)
+
+
+    def initDevice(self):
+
+        if torch.cuda.device_count() > 1:
+            print("Available GPUs: ", torch.cuda.device_count())
+            self.skip_gram_model = torch.nn.DataParallel(self.skip_gram_model)
+
+        if torch.cuda.is_available():
+            self.skip_gram_model.cuda()
 
 
     # initialise/refresh weights of model
@@ -70,6 +71,7 @@ class Word2VecTrainer:
         losses     = list()
         dataloader = self.initDataLoader(training_files)
         self.weightInitialisation(init, saved_model_path=model_path)
+        self.initDevice()
 
         for iteration in tqdm(range(num_epochs)):
 
