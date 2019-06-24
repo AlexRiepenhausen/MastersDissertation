@@ -5,6 +5,7 @@ from utilities import utilities, plotgraphs, paths
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
+from sklearn.metrics import confusion_matrix
 
 if __name__ == '__main__':
 
@@ -12,15 +13,16 @@ if __name__ == '__main__':
     loading = start
 
     #init paths
-    p = paths.Paths(training_samples=1000, test_samples=100)
+    p = paths.Paths(training_samples=1000, test_samples=1000)
 
     # set mode of operation
-    mode       = Mode.word2vec
-    save_model = True
+    mode       = Mode.lstm
+    save_model = False
+    confusion  = True
 
     # models to be loaded
     # w2v_model  = p.w2v_model_param  + 'lr_0.1_bs_32_ipe_288_embs_459_embd_10_win_5_date_2019_06_13_15_06_14'
-    # lstm_model = p.lstm_model_param + 'lr_0.001_ipe_100_in_10_sq_6_hd_30_ly_1_out_3_date_2019_06_13_15_25_25'
+    lstm_model = p.lstm_model_param + 'lr_0.001_ipe_100_in_300_sq_6_hd_60_ly_1_out_10_date_2019_06_24_15_40_46'
 
     if mode == Mode.word2vec:
 
@@ -28,13 +30,13 @@ if __name__ == '__main__':
         w2v = Word2VecTrainer(primary_files=p.all_files,
                               emb_dimension=300,
                               batch_size=32,
-                              window_size=2,
+                              window_size=5,
                               initial_lr=0.01,
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
         loading = time.time()
-        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=500)
+        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=300)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)
@@ -63,19 +65,28 @@ if __name__ == '__main__':
                            p.vec_files_test,
                            p.vec_lbls_test,
                            learning_rate=0.001,
-                           iterations_per_epoch=100,
-                           input_dim=100,
+                           iterations_per_epoch=1,
+                           input_dim=300,
                            seq_dim=6,
-                           hidden_dim=30,
+                           hidden_dim=60,
                            layer_dim=1,
                            output_dim=10)
 
         # train lstm
         loading = time.time()
-        parcel = lstm.train(num_epochs=100, compute_accuracies=True)
+        parcel = lstm.train(num_epochs=0, compute_accuracies=True, init=weightInit.load, model_path=lstm_model)
+        #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
         # write results to csv
         utilities.resultsToCSV(parcel, lstm.to_string, p.lstm_csv_lss_dir, p.lstm_csv_acc_dir)
+
+        # write confusion matrix as image to output
+        if confusion:
+            labels, accuracy = lstm.evaluateModel(test_samples=1000)
+            print("Accuracy: {}".format(accuracy))
+            class_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            plotgraphs.plot_confusion_matrix(labels[0], labels[1], p.confusion_matrix, classes=class_names,
+                                                title='Confusion matrix, without normalization')
 
         # save model if specified
         if save_model:
@@ -87,7 +98,6 @@ if __name__ == '__main__':
         path = p.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
         measure_similarity = CosineSimilarity(p.imdb_files_neg_train, p.dict_file)
         measure_similarity.angularDistancesToFile(path)
-        #p.sim_csv_dir
 
 
     if mode == Mode.plot:

@@ -58,10 +58,14 @@ class LSTMTrainer:
             exit(0)
 
 
-    def evaluateModel(self):
+    def evaluateModel(self, test_samples=100):
 
         correct = 0
         total = 0
+
+        label_true = list()
+        label_pred = list()
+
         for j, (vector_doc, label) in enumerate(self.test_loader):
 
             if torch.cuda.is_available():
@@ -87,11 +91,15 @@ class LSTMTrainer:
                 if predicted.cpu() == label.squeeze(dim=0).cpu():
                     correct += 1
 
-            if j % 99 == 0 and j > 0:
-                return float(correct) / float(total)
+            label_true.append(label.squeeze(dim=0).cpu())
+            label_pred.append(predicted.cpu())
+
+            if j == test_samples-1:
+                accuracy = float(correct) / float(total)
+                return (label_true, label_pred), accuracy
 
 
-    def train(self, num_epochs, compute_accuracies, init=weightInit.fromScratch, model_path=None):
+    def train(self, num_epochs, compute_accuracies, test_samples=100, init=weightInit.fromScratch, model_path=None):
 
         losses     = []
         accuracies = []
@@ -137,7 +145,8 @@ class LSTMTrainer:
                 if self.runEvaluation(i):
                     losses.append(avg_loss/self.iterations_per_epoch)
                     if compute_accuracies==True:
-                        accuracies.append(self.evaluateModel())
+                        _, accuracy = self.evaluateModel(test_samples)
+                        accuracies.append(accuracy)
                     break
 
         parcel.append(losses)
@@ -149,6 +158,7 @@ class LSTMTrainer:
 
     # check if it is necessary to run evaluation of accuracy
     def runEvaluation(self,iter):
+
         if self.iterations_per_epoch == 1:
             return True
         else:
