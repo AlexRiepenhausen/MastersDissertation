@@ -26,15 +26,15 @@ if __name__ == '__main__':
 
         # word2vec training parameters
         w2v = Word2VecTrainer(primary_files=p.all_files,
-                              emb_dimension=100,
+                              emb_dimension=300,
                               batch_size=32,
-                              window_size=5,
-                              initial_lr=0.001,
+                              window_size=2,
+                              initial_lr=0.01,
                               min_count=1)
 
         # train standard word2vec -> train function outputs dictionary at the end
         loading = time.time()
-        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=1)
+        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=500)
 
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)

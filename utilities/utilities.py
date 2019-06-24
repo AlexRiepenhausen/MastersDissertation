@@ -17,6 +17,7 @@ class Mode(IntEnum):
     lstm       = 2
     similarity = 3
     plot       = 4
+    testlstm   = 5
 
 class weightInit(IntEnum):
     fromScratch = 0

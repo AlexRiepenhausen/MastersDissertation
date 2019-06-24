@@ -45,6 +45,7 @@ class SkipGramModel(nn.Module):
                 e = ' '.join(map(lambda x: str(x), embedding[wid]))
                 f.write('%s %s\n' % (w, e))
 
+
     # initialise (or refresh) weights
     def weight_init(self):
         initrange = 1.0 / self.emb_dimension
