@@ -58,7 +58,7 @@ class LSTMTrainer:
             exit(0)
 
 
-    def evaluateModel(self, test_samples=100):
+    def evaluateModel(self, test_samples=100, test=False):
 
         correct = 0
         total = 0
@@ -66,7 +66,11 @@ class LSTMTrainer:
         label_true = list()
         label_pred = list()
 
-        for j, (vector_doc, label) in enumerate(self.test_loader):
+        loader = self.test_loader
+        if test == False:
+            loader = self.train_loader
+
+        for j, (vector_doc, label) in enumerate(loader):
 
             if torch.cuda.is_available():
                 vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())

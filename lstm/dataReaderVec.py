@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from torch.utils.data import Dataset
+from collections import defaultdict, OrderedDict
 
 class VectorDataset(Dataset):
 
@@ -11,8 +12,26 @@ class VectorDataset(Dataset):
         self.labels     = np.asarray(labels)
         self.seq_dim    = seq_dim
 
+        # print label distribution
+        self.labelHistogram()
+
+
     def __len__(self):
         return self.num_files/self.batch_size
+
+
+    def labelHistogram(self):
+        lbl_hist = defaultdict(int)
+        for label in self.labels:
+            lbl_hist[label] += 1
+
+        lbl_hist = OrderedDict(sorted(lbl_hist.items()))
+        print("| ---- Label Frequency ----  |")
+        print("|                            |")
+        for item in lbl_hist:
+                print("| Label: {:2d}, Frequency: {:4d} |".format(item, lbl_hist[item]))
+        print("|                            |")
+
 
     def __getitem__(self, idx):
 

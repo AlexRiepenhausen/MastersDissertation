@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     # set mode of operation
     mode       = Mode.lstm
-    save_model = False
+    save_model = True
     confusion  = True
 
     # models to be loaded
@@ -64,34 +64,44 @@ if __name__ == '__main__':
                            p.vec_lbls_train,
                            p.vec_files_test,
                            p.vec_lbls_test,
-                           learning_rate=0.001,
-                           iterations_per_epoch=1,
-                           input_dim=300,
+                           learning_rate=0.002,
+                           iterations_per_epoch=1000,
+                           input_dim=100,
                            seq_dim=6,
-                           hidden_dim=60,
+                           hidden_dim=30,
                            layer_dim=1,
                            output_dim=10)
 
         # train lstm
         loading = time.time()
-        parcel = lstm.train(num_epochs=0, compute_accuracies=True, init=weightInit.load, model_path=lstm_model)
+        exit(0)
+        parcel = lstm.train(num_epochs=200, compute_accuracies=True)
         #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
+
+        # save model if specified
+        if save_model:
+            path = p.lstm_model_param + lstm.to_string + '_date_' + utilities.timeStampedFileName()
+            torch.save(lstm.model.state_dict(), path)
 
         # write results to csv
         utilities.resultsToCSV(parcel, lstm.to_string, p.lstm_csv_lss_dir, p.lstm_csv_acc_dir)
 
         # write confusion matrix as image to output
         if confusion:
-            labels, accuracy = lstm.evaluateModel(test_samples=1000)
-            print("Accuracy: {}".format(accuracy))
+
+            # test set
+            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=True)
+            print("Accuracy Test Set: {}".format(accuracy))
             class_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], p.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
 
-        # save model if specified
-        if save_model:
-            path = p.lstm_model_param + lstm.to_string + '_date_' + utilities.timeStampedFileName()
-            torch.save(lstm.model.state_dict(), path)
+            # training set
+            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=False)
+            print("Accuracy Training Set: {}".format(accuracy))
+            plotgraphs.plot_confusion_matrix(labels[0], labels[1], p.confusion_matrix, classes=class_names,
+                                                title='Confusion matrix, without normalization')
+
 
 
     if mode == Mode.similarity:
@@ -103,7 +113,7 @@ if __name__ == '__main__':
     if mode == Mode.plot:
 
         w2v_lss_y_range  = [ 0.0, 4.0]
-        lstm_lss_y_range = [ 0.0, 3.0]
+        lstm_lss_y_range = [-0.2, 2.0]
         lstm_acc_y_range = [-0.1, 1.1]
 
         plotgraphs.convertCsvToGraphs(p.w2v_csv_lss_dir,   p.w2v_graph_lss_dir,  w2v_lss_y_range, 'Log-sigmoid loss')
