@@ -1,4 +1,4 @@
-from utilities.utilities import generateFilePaths, readSpecifiedNumberOfFiles, copyFileNamesToDifferentPath
+from utilities.utilities import generateFilePaths, readSpecifiedNumberOfFiles, copyFileNamesToDifferentPath, getFilesInDirectory
 from utilities.utilities import getLabelsFromFiles
 
 class Paths():
@@ -62,3 +62,23 @@ class Paths():
         # similarity
         self.sim_csv_dir = './data/w2v/similarity/csv/'
         self.sim_img_dir = './data/w2v/similarity/img/'
+
+
+class RosDataPaths():
+
+    def __init__(self):
+
+        # word2vec training raw documents
+        self.docpath = './data/w2v/training/documents/'
+        self.docfile = './data/w2v/training/documents/flatted_examples.ndjson'
+        self.colours = './data/w2v/training/documents/colours.txt'
+
+        # word2vec training data dictionaries
+        self.dict_file = './data/w2v/training/dictionary/dict.vec'
+
+        # word2vec model weights
+        self.w2v_model_param = './data/w2v/training/models/'
+        
+        
+        
+        

@@ -11,22 +11,26 @@ from lstm.dataReaderVec import VectorDataset
 
 from enum import IntEnum
 
+
 class Mode(IntEnum):
     word2vec   = 0
     conversion = 1
     lstm       = 2
     similarity = 3
     plot       = 4
-    confusion  = 5
+    display    = 5
+
 
 class weightInit(IntEnum):
     fromScratch = 0
     load        = 1
     inherit     = 2
 
+
 class Vec(IntEnum):
     zeroVec = 0
     skipVec = 1
+
 
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):

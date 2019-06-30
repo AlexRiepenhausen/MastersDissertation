@@ -1,11 +1,11 @@
 import torch
 import time
 from utilities.utilities import Mode, weightInit, Vec
-from utilities import utilities, plotgraphs, paths
+from utilities import utilities, plotgraphs, paths, display
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
-from sklearn.metrics import confusion_matrix
+
 
 if __name__ == '__main__':
 
@@ -13,16 +13,18 @@ if __name__ == '__main__':
     loading = start
 
     #init paths
-    p = paths.Paths(training_samples=1000, test_samples=1000)
+    ros = paths.RosDataPaths()
 
     # set mode of operation
-    mode       = Mode.lstm
+    mode       = Mode.display
     save_model = True
     confusion  = True
 
-    # models to be loaded
-    # w2v_model  = p.w2v_model_param  + 'lr_0.1_bs_32_ipe_288_embs_459_embd_10_win_5_date_2019_06_13_15_06_14'
-    lstm_model = p.lstm_model_param + 'lr_0.001_ipe_100_in_300_sq_6_hd_60_ly_1_out_10_date_2019_06_24_15_40_46'
+    
+    if mode == Mode.display:
+        display = display.Display(ros.docpath, ros.docfile, 3)
+        display.run()
+        exit(0)
 
     if mode == Mode.word2vec:
 
@@ -74,7 +76,6 @@ if __name__ == '__main__':
 
         # train lstm
         loading = time.time()
-        exit(0)
         parcel = lstm.train(num_epochs=200, compute_accuracies=True)
         #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
@@ -119,6 +120,8 @@ if __name__ == '__main__':
         plotgraphs.convertCsvToGraphs(p.w2v_csv_lss_dir,   p.w2v_graph_lss_dir,  w2v_lss_y_range, 'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_lss_dir, p.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_acc_dir, p.lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
+
+
 
     end = time.time()
 
