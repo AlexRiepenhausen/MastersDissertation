@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     
     if mode == Mode.display:
-        display = display.Display(ros.docpath, ros.docfile, 3)
+        display = display.Display(ros.docpath, ros.docfile, 1000)
         display.run()
         exit(0)
 

@@ -46,7 +46,7 @@ class Display():
     def writeToFile(self):
         with open(self.filename, mode='w') as writer:
             ndjson.dump(self.data, writer)
-            print("Saved new tags to file")
+        print("Saved new tags to file")
             
             
     def previous(self):
@@ -56,23 +56,38 @@ class Display():
             
     def displayFile(self, index):
     
-        colour_txt = 'TBA'
-        config_txt = 'TBA'
-            
-        if 'colour' in self.data[index]:
-            colour_txt = self.data[index]['colour'] 
-            
-        if 'configuration' in self.data[index]:
-            config_txt = self.data[index]['configuration']       
+        property_type   = 'TBA'
+        exclusive_solum = 'TBA'
+        common_solum    = 'TBA'
+        char_count      = len(self.data[index]['text']) 
         
-        displayedtext = "ID: " + self.data[index]['id'] + '\n' + \
-                        "Number: " + str(index) +"\n" + \
-                        "Colour: " + colour_txt + '\n' + \
-                        "Config: " + config_txt + '\n\n' + \
-                        self.data[index]['text'] + "\n"
+        if 'char_count' not in self.data[index]:
+            self.data[index]['char_count'] = char_count         
+                
+        if 'property_type' in self.data[index]:
+            property_type = self.data[index]['property_type'] 
+            
+        if 'exclusive_solum' in self.data[index]:
+            exclusive_solum = self.data[index]['exclusive_solum']       
+            
+        if 'common_solum' in self.data[index]:
+            common_solum = self.data[index]['common_solum']    
+            
+        # format the text to be displayed
         
-        col_input = StringVar() 
-        con_input = StringVar() 
+        _ =     'ID             : ' + self.data[index]['id'] + '\n'
+        _ = _ + 'Number         : ' + str(index)      + '\n' 
+        _ = _ + 'Character Count: ' + str(char_count) + '\n' 
+        _ = _ + 'Property Type  : ' + property_type   + '\n' 
+        _ = _ + 'Exclusive Solum: ' + exclusive_solum + '\n' 
+        _ = _ + 'Common Solum   : ' + common_solum    + '\n\n'           
+        _ = _ + self.data[index]['text'] + '\n\n' 
+            
+        displayedtext = _
+        
+        property_type_input   = StringVar() 
+        exclusive_solum_input = StringVar() 
+        common_solum_input    = StringVar()
         
         top = Frame(self.master)
         bottom = Frame(self.master)
@@ -80,39 +95,49 @@ class Display():
         top.pack(side=TOP)
         bottom.pack(side=BOTTOM)
         
-        lb  = Label(self.master, text=displayedtext, pady=10, anchor=W, justify=LEFT, font="Times 14",wraplength=1300,background='white')
+        t1  = Label(self.master, text=displayedtext, pady=10, anchor=W, justify=LEFT, font="Times 14",wraplength=1300,background='white')
         
-        cll = Label(self.master, text="Colour", font="Times 14")
-        cnk = Label(self.master, text="Config", font="Times 14")   
+        l1 = Label(self.master, text="Property Type", font="Times 14")
+        l2 = Label(self.master, text="Exclusive Solum", font="Times 14") 
+        l3 = Label(self.master, text="Common Solum", font="Times 14")   
         
-        cl  = Entry(self.master,text="Colour ", textvariable=col_input) 
-        cn  = Entry(self.master,text="Config ", textvariable=con_input)
+        e1  = Entry(self.master, textvariable = property_type_input) 
+        e2  = Entry(self.master, textvariable = exclusive_solum_input)
+        e3  = Entry(self.master, textvariable = common_solum_input)
         
-        bt1  = Button(self.master, text="Prev",  width=10, justify=LEFT, command=self.previous)
-        bt2  = Button(self.master, text="Next",  width=10, justify=LEFT, command=self.master.destroy)
-        bt3  = Button(self.master, text="Save",  width=10, justify=LEFT, command=self.writeToFile)
+        b1  = Button(self.master, text="Prev", width=10, justify=LEFT, command=self.previous)
+        b2  = Button(self.master, text="Next", width=10, justify=LEFT, command=self.master.destroy)
+        b3  = Button(self.master, text="Save", width=10, justify=LEFT, command=self.writeToFile)
         
-        lb.pack(in_=top) 
-        cll.pack(in_=bottom, side=LEFT)
-        cl.pack(in_=bottom, side=LEFT)
-        cnk.pack(in_=bottom, side=LEFT)  
-        cn.pack(in_=bottom, side=LEFT)  
-        bt1.pack(in_=bottom, side=LEFT)
-        bt2.pack(in_=bottom, side=LEFT)
-        bt3.pack(in_=bottom, side=LEFT)
+        t1.pack(in_=top) 
+        
+        l1.pack(in_=bottom, side=LEFT)
+        e1.pack(in_=bottom, side=LEFT)
+        l2.pack(in_=bottom, side=LEFT)
+        e2.pack(in_=bottom, side=LEFT)
+        l3.pack(in_=bottom, side=LEFT)
+        e3.pack(in_=bottom, side=LEFT)
+        
+        b1.pack(in_=bottom, side=LEFT)
+        b2.pack(in_=bottom, side=LEFT)
+        b3.pack(in_=bottom, side=LEFT)
         
         self.master.protocol("WM_DELETE_WINDOW", quit)
         
         mainloop()
         
-        col = col_input.get()
-        if col != '':
-            print("Index: {}, ID: {}, Old colour: {}, New colour assigned: {}".format(index, self.data[index]['id'], colour_txt, col_input.get()))
-            self.data[index]['colour'] = col
+        pti = property_type_input.get()
+        esi = exclusive_solum_input.get()        
+        csi = common_solum_input.get()        
+        
+        if pti != '':
+            print("Index: {}, ID: {}, Old property type: {}, New property type assigned: {}".format(index, self.data[index]['id'], property_type, pti))
+            self.data[index]['property_type'] = pti
             
-        con = con_input.get()
-        if con != '':
-            print("Index: {}, ID: {}, Old config: {}, New config assigned: {}".format(index, self.data[index]['id'], config_txt, con_input.get())) 
-            self.data[index]['configuration'] = con    
+        if esi != '':
+            print("Index: {}, ID: {}, Old exclusive solum: {}, New exclusive solum assigned: {}".format(index, self.data[index]['id'], exclusive_solum, esi)) 
+            self.data[index]['exclusive_solum'] = esi    
   
- 
+        if csi != '':
+            print("Index: {}, ID: {}, Old common solum: {}, New common solum assigned: {}".format(index, self.data[index]['id'], common_solum, csi)) 
+            self.data[index]['common_solum'] = csi     

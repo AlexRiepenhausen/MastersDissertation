@@ -5,6 +5,8 @@
 *.jpg
 *.bmp
 *.csv
+*.ndjson
+*.json
 *
 !/**/
 !*.*S
