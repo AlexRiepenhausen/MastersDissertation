@@ -1,4 +1,5 @@
 import torch
+import random
 import numpy as np
 from torch.utils.data import Dataset
 from collections import defaultdict, OrderedDict
@@ -35,17 +36,16 @@ class VectorDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        randindex = np.random.randint(low=0, high=self.num_files)
-        file   = open(self.file_paths[randindex], 'r', encoding='utf8')
+        findex = random.randint(-1, self.num_files-1)
+        file   = open(self.file_paths[findex], 'r', encoding='utf8')
 
-        vectors   = list()
-        for i in range(0, self.seq_dim):
-            arr = np.fromstring(file.readline(), dtype=float, sep=" ")
+        vectors  = list()
+        line = file.readline()
+
+        while line:
+            arr = np.fromstring(line, dtype=float, sep=" ")
             vectors.append(arr)
+            line = file.readline()
 
-        label = 1
-        if self.labels[randindex] < 5:
-            label = 0
-
-        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor([label]).long()
+        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor([self.labels[findex]]).long()
 

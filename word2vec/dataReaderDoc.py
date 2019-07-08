@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import random
 from torch.utils.data import Dataset
 from utilities import utilities
 
@@ -143,7 +144,7 @@ class Word2vecDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        findex = np.random.randint(low=0, high=self.num_files)
+        findex = random.randint(-1, self.num_files-1)
         file   = open(self.files[findex], 'r', encoding='utf8')
 
         while True:

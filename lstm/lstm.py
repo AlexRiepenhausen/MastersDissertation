@@ -42,7 +42,6 @@ class LSTMModel(nn.Module):
             outs.append(hn)
 
         out = outs[-1].squeeze()
-
         out = self.fc(out)
 
         return out

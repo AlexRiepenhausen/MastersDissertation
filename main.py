@@ -14,10 +14,10 @@ if __name__ == '__main__':
 
     #init paths
     ros = paths.RosDataPaths()
-    p   = paths.Paths(training_samples=5000, test_samples=1000)
+    p   = paths.Paths(training_samples=1000, test_samples=1000)
 
     # set mode of operation
-    mode       = Mode.word2vec
+    mode       = Mode.lstm
     save_model = True
     confusion  = True
 
@@ -69,16 +69,16 @@ if __name__ == '__main__':
                            p.vec_files_test,
                            p.vec_lbls_test,
                            learning_rate=0.002,
-                           iterations_per_epoch=1000,
+                           iterations_per_epoch=20,
                            input_dim=100,
-                           seq_dim=6,
+                           seq_dim=12,
                            hidden_dim=10,
                            layer_dim=1,
                            output_dim=2)
 
         # train lstm
         loading = time.time()
-        parcel = lstm.train(num_epochs=1000, compute_accuracies=True)
+        parcel = lstm.train(num_epochs=100, compute_accuracies=True)
         #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
         # save model if specified
@@ -122,7 +122,6 @@ if __name__ == '__main__':
         plotgraphs.convertCsvToGraphs(p.w2v_csv_lss_dir,   p.w2v_graph_lss_dir,  w2v_lss_y_range, 'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_lss_dir, p.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
         plotgraphs.convertCsvToGraphs(p.lstm_csv_acc_dir, p.lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
-
 
 
     end = time.time()

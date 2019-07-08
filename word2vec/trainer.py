@@ -94,17 +94,11 @@ class Word2VecTrainer:
                     pos_v = sample_batched[1].to(self.device)
                     neg_v = sample_batched[2].to(self.device)
 
-                    process_start = time.time()
-
                     scheduler.step()
                     optimizer.zero_grad()
                     loss = self.skip_gram_model.forward(pos_u, pos_v, neg_v)
                     loss.backward()
                     optimizer.step()
-
-                    process_end  = time.time()
-
-                    process = process + (process_end - process_start)
 
                     running_loss = running_loss * 0.9 + loss.item() * 0.1
                     cumulative_loss += loss.item()

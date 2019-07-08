@@ -73,10 +73,10 @@ class LSTMTrainer:
         for j, (vector_doc, label) in enumerate(loader):
 
             if torch.cuda.is_available():
-                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
+                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
                 label = Variable(label.cuda())
             else:
-                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
+                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
                 label = Variable(label)
 
             # Forward pass only to get logits/output
@@ -119,10 +119,10 @@ class LSTMTrainer:
             for i, (vector_doc, label) in enumerate(self.train_loader):
 
                 if torch.cuda.is_available():
-                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
+                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
                     label      = Variable(label.cuda())
                 else:
-                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
+                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
                     label      = Variable(label)
 
                 # Clear gradients w.r.t. parameters
