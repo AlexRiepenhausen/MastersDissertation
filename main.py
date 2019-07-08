@@ -1,7 +1,7 @@
 import torch
 import time
 from utilities.utilities import Mode, weightInit, Vec
-from utilities import utilities, plotgraphs, paths, display
+from utilities import utilities, plotgraphs, paths
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
@@ -14,23 +14,25 @@ if __name__ == '__main__':
 
     #init paths
     ros = paths.RosDataPaths()
+    p   = paths.Paths(training_samples=5000, test_samples=1000)
 
     # set mode of operation
-    mode       = Mode.display
+    mode       = Mode.word2vec
     save_model = True
     confusion  = True
 
-    
+    '''
     if mode == Mode.display:
         display = display.Display(ros.docpath, ros.docfile, 1000)
         display.run()
         exit(0)
+    '''
 
     if mode == Mode.word2vec:
 
         # word2vec training parameters
         w2v = Word2VecTrainer(primary_files=p.all_files,
-                              emb_dimension=300,
+                              emb_dimension=100,
                               batch_size=32,
                               window_size=5,
                               initial_lr=0.01,
@@ -38,8 +40,8 @@ if __name__ == '__main__':
 
         # train standard word2vec -> train function outputs dictionary at the end
         loading = time.time()
-        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=300)
-
+        parcel_0 = w2v.train(p.all_files, p.dict_file, num_epochs=3)
+        
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), p.w2v_csv_lss_dir)
 
@@ -70,13 +72,13 @@ if __name__ == '__main__':
                            iterations_per_epoch=1000,
                            input_dim=100,
                            seq_dim=6,
-                           hidden_dim=30,
+                           hidden_dim=10,
                            layer_dim=1,
-                           output_dim=10)
+                           output_dim=2)
 
         # train lstm
         loading = time.time()
-        parcel = lstm.train(num_epochs=200, compute_accuracies=True)
+        parcel = lstm.train(num_epochs=1000, compute_accuracies=True)
         #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
         # save model if specified
@@ -93,7 +95,7 @@ if __name__ == '__main__':
             # test set
             labels, accuracy = lstm.evaluateModel(test_samples=1000, test=True)
             print("Accuracy Test Set: {}".format(accuracy))
-            class_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], p.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
 

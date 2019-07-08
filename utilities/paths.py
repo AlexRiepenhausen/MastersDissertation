@@ -71,7 +71,7 @@ class RosDataPaths():
         # word2vec training raw documents
         self.docpath = './data/w2v/training/documents/'
         self.docfile = './data/w2v/training/documents/flatted_examples.ndjson'
-        self.colours = './data/w2v/training/documents/colours.txt'
+        self.colours = './data/w2v/training/documents/keywords.txt'
 
         # word2vec training data dictionaries
         self.dict_file = './data/w2v/training/dictionary/dict.vec'

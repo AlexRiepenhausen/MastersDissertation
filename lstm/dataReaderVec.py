@@ -43,5 +43,9 @@ class VectorDataset(Dataset):
             arr = np.fromstring(file.readline(), dtype=float, sep=" ")
             vectors.append(arr)
 
-        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor([self.labels[randindex]]).long()
+        label = 1
+        if self.labels[randindex] < 5:
+            label = 0
+
+        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor([label]).long()
 

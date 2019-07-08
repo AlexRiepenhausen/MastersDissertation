@@ -27,9 +27,50 @@ class DataReader:
 
         self.file_paths = primary_files if supporting_files is None else primary_files + supporting_files
 
-        self.readWords(min_count)
-        self.initTableNegatives()
-        self.initTableDiscards()
+        if self.ndJson(primary_files):
+            self.readWordsNdJson(min_count)
+        else:
+            self.readWords(min_count)
+            self.initTableNegatives()
+            self.initTableDiscards()
+
+
+    def ndJson(self, primary_files):
+        if len(primary_files) == 1 and '.ndjson' in primary_files:
+            return True
+        else:
+            return False
+
+
+    # read words and create word2id and id2word lookup tables
+    def readWordsNdJson(self, min_count):
+
+        print("Setting up word2vec training")
+        word_frequency = dict()
+        word_count = 0
+
+        data = None
+        with open(self.filename) as f:
+            data = ndjson.load(f)
+
+        for i in range(0, 5000):
+            text = data[i]['text']
+            for word in text:
+                print(word)
+
+        exit(0)
+
+        wid = 0
+        for w, c in word_frequency.items():
+            if c < min_count:
+                continue
+            self.word2id[w] = wid
+            self.id2word[wid] = w
+            self.word_frequency[wid] = c
+            wid += 1
+
+        print("Read " + str(self.token_count) + " words.\n")
+        print("Total embeddings: " + str(len(self.word2id))+ '\n')
 
 
     # read words and create word2id and id2word lookup tables
