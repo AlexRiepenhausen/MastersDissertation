@@ -1,4 +1,5 @@
 import torch
+import time
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -9,7 +10,7 @@ from word2vec.word2vec import SkipGramModel
 from utilities.utilities import weightInit
 
 class Word2VecTrainer:
-    def __init__(self, primary_files, supporting_files=None,
+    def __init__(self, keyword_path, primary_files, supporting_files=None,
                  emb_dimension=10, batch_size=32, window_size=5, initial_lr=0.1, min_count=1):
 
         # the actual data
@@ -24,7 +25,7 @@ class Word2VecTrainer:
         self.iter_per_epoch = 0
 
         # init model
-        self.skip_gram_model = SkipGramModel(self.emb_size, self.emb_dimension)
+        self.skip_gram_model = SkipGramModel(keyword_path, self.emb_size, self.emb_dimension)
         self.device          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -46,11 +47,12 @@ class Word2VecTrainer:
 
     def initDevice(self):
 
-        if torch.cuda.device_count() > 1:
-            print("Available GPUs: ", torch.cuda.device_count())
-            self.skip_gram_model = torch.nn.DataParallel(self.skip_gram_model)
+        #if torch.cuda.device_count() > 1:
+            #print("Available GPUs: ", torch.cuda.device_count())
+            #self.skip_gram_model = torch.nn.DataParallel(self.skip_gram_model)
 
         if torch.cuda.is_available():
+            print("Exported to GPU")
             self.skip_gram_model.cuda()
 
 
@@ -105,9 +107,10 @@ class Word2VecTrainer:
             self.iter_per_epoch = int(count * self.batch_size)
 
         # write to vectors
-        if torch.cuda.device_count() > 1:
-            self.skip_gram_model.module.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
-        else:
-            self.skip_gram_model.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
-
+        #if torch.cuda.device_count() > 1:
+            #self.skip_gram_model.module.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
+        #else:
+            #self.skip_gram_model.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
+            
+        self.skip_gram_model.save_embedding(self.data.id2word, output_file, self.data.max_num_words_file)
         return losses

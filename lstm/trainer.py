@@ -39,9 +39,9 @@ class LSTMTrainer:
 
     def initDevice(self):
 
-        if torch.cuda.device_count() > 1:
-            print("Available GPUs: ", torch.cuda.device_count())
-            self.model = torch.nn.DataParallel(self.model)
+        #if torch.cuda.device_count() > 1:
+            #print("Available GPUs: ", torch.cuda.device_count())
+            #self.model = torch.nn.DataParallel(self.model)
 
         if torch.cuda.is_available():
             self.model.cuda()
@@ -71,12 +71,12 @@ class LSTMTrainer:
             loader = self.train_loader
 
         for j, (vector_doc, label) in enumerate(loader):
-
+        
             if torch.cuda.is_available():
-                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
+                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
                 label = Variable(label.cuda())
             else:
-                vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
+                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
                 label = Variable(label)
 
             # Forward pass only to get logits/output
@@ -119,11 +119,11 @@ class LSTMTrainer:
             for i, (vector_doc, label) in enumerate(self.train_loader):
 
                 if torch.cuda.is_available():
-                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim).cuda())
-                    label      = Variable(label.cuda())
+                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
+                    label = Variable(label.cuda())
                 else:
-                    vector_doc = Variable(vector_doc.view(-1, self.seq_dim, self.input_dim))
-                    label      = Variable(label)
+                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
+                    label = Variable(label)
 
                 # Clear gradients w.r.t. parameters
                 self.optimiser.zero_grad()
@@ -133,7 +133,7 @@ class LSTMTrainer:
                 outputs = self.model(vector_doc)
 
                 # Calculate Loss: softmax --> cross entropy loss
-                loss = self.criterion(outputs.unsqueeze(dim=0), label)
+                loss = self.criterion(outputs.unsqueeze(dim=0), label.unsqueeze(dim=0))
 
                 if torch.cuda.is_available():
                     loss.cuda()

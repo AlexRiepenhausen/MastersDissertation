@@ -1,5 +1,6 @@
 import torch
 import re
+import sys
 import csv
 import time
 import datetime
@@ -44,13 +45,65 @@ def parseLine(line):
 # returns a list of file paths from the same directory to avoid manual initialisation
 def generateFilePaths(path, number_of_docs, extension):
     paths = list()
-    for i in range(0, number_of_docs):
-        paths.append(path + str(i) + extension)
+    for i in range(0, number_of_docs):      
+        paths.append(path + '{0:05d}'.format(i) + extension)
     return paths
+    
+
+def getTextNdJson(data, index):
+
+    address    = parseLine(data[index]['address'][0]['prettyPrint']) 
+    text_array = parseLine(data[index]['text']).replace(address, 'address').split(' ') 
+
+    result = list()
+    
+    for item in text_array:
+        if len(item) > 0:
+            result.append(item)
+            
+    return result  
+
+
+def ndjsonVectorisation(data, vec_files, labels, dict_file, unknown_vec):
+
+    num_unknown_words = 0
+    total_num_words   = 0
+
+    vector_dict, params = readVectorsDict(dict_file)
+
+    for i in range(0, len(vec_files)):
+        
+        text = getTextNdJson(data, i)
+            
+        with open(vec_files[i], 'w') as f:
+        
+            # replace words with vectors
+            for word in text:
+            
+                if word in vector_dict:
+                    f.write(str(vector_dict[word]).replace("'", "").replace(", ", " ").replace("[", "").replace("]", "")+'\n')
+                else:
+                    num_unknown_words += 1
+                    
+                total_num_words += 1
+                
+        with open(labels[i], 'w') as f:
+            f.write(data[i]['property_type'] + '\n')
+            f.write(data[i]['exclusive_solum']+ '\n')                   
+            f.write(data[i]['common_solum']+ '\n')  
+            f.write(data[i]['additional_info']+ '\n')
+        
+            
+    percent_unknown_words = num_unknown_words*100/total_num_words
+    sys.stderr.flush()
+    print("\nTotal number of words {}, unknown words {}, percentage unknown words {}".format(total_num_words,
+                                                                                              num_unknown_words,
+                                                                                              percent_unknown_words))            
 
 
 # convert documents into vector representations and write them to files
 def documentVectorisation(doc_files, vec_files, dict_file, unknown_vec, debug=False):
+
     converter = File2VecConverter(doc_files, dict_file, unknown_vec)
     converter.convertDocuments(vec_files)
 
@@ -211,11 +264,13 @@ def getLabelsFromFiles(files, extension):
 
 
 def copyFileNamesToDifferentPath(path, filenames, extension):
+
     new_file_names = list()
     for file in filenames:
         chunks = file.split('/')
         file_name = path + chunks[len(chunks)-1].split('.')[0] + extension
         new_file_names.append(file_name)
+        
     return new_file_names
 
 

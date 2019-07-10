@@ -1,12 +1,16 @@
 import numpy as np
 import torch
+import time
+import random
+import ndjson
+import jsonlines
 from torch.utils.data import Dataset
 from utilities import utilities
 
 np.random.seed(12345)
 
 class DataReader:
-    NEGATIVE_TABLE_SIZE = 1e8
+    NEGATIVE_TABLE_SIZE = 1e5
 
     def __init__(self, primary_files, min_count, supporting_files=None):
 
@@ -18,7 +22,6 @@ class DataReader:
         self.id2word        = dict()
         self.word_frequency = dict()
 
-        self.sentences_count    = 0
         self.token_count        = 0
         self.max_num_words_file = 0
 
@@ -26,10 +29,68 @@ class DataReader:
         self.supporting_files   = supporting_files
 
         self.file_paths = primary_files if supporting_files is None else primary_files + supporting_files
+        
+        self.data = None
 
-        self.readWords(min_count)
+        if self.ndJson:
+            with open(self.primary_files) as f:
+                self.data = ndjson.load(f)
+            self.readWordsNdJson(min_count)
+        else:
+            self.readWords(min_count)
+            
         self.initTableNegatives()
         self.initTableDiscards()
+
+
+    def ndJson(self, primary_files):
+        if len(primary_files) == 1 and '.ndjson' in primary_files:
+            return True
+        else:
+            return False
+            
+    
+    def getTextNdJson(self, index):
+    
+        address    = utilities.parseLine(self.data[index]['address'][0]['prettyPrint']) 
+        text_array = utilities.parseLine(self.data[index]['text']).replace(address, 'address').split(' ') 
+
+        result = list()
+        
+        for item in text_array:
+            if len(item) > 0:
+                result.append(item)
+                
+        self.data[index]['text_array'] = result  
+
+
+    # read words and create word2id and id2word lookup tables
+    def readWordsNdJson(self, min_count):
+
+        print("Setting up word2vec training")
+        word_frequency = dict()
+
+        for i in range(0, 5000):
+
+            word_count = 0            
+            self.getTextNdJson(i)
+            
+            for word in self.data[i]['text_array']:
+                word_count += 1
+                self.token_count += 1
+                word_frequency[word] = word_frequency.get(word, 0) + 1
+
+        wid = 0
+        for w, c in word_frequency.items():
+            if c < min_count:
+                continue
+            self.word2id[w] = wid
+            self.id2word[wid] = w
+            self.word_frequency[wid] = c
+            wid += 1
+
+        print("Read " + str(self.token_count) + " words.\n")
+        print("Total embeddings: " + str(len(self.word2id))+ '\n')
 
 
     # read words and create word2id and id2word lookup tables
@@ -41,7 +102,6 @@ class DataReader:
             for line in open(file, encoding="utf8"):
                 line = utilities.parseLine(line).split()
                 if len(line) > 1:
-                    self.sentences_count += 1
                     for word in line:
                         word_count += 1
                         if len(word) > 0:
@@ -95,33 +155,46 @@ class Word2vecDataset(Dataset):
         self.data        = data
         self.window_size = window_size
         self.files       = data.file_paths if custom_files is None else custom_files
-        self.num_files   = len(self.files)
+        self.num_files   = 5000
 
     def __len__(self):
-        return self.data.sentences_count
+        return 5000 #numdocuments
 
     def __getitem__(self, idx):
 
-        findex = np.random.randint(low=0, high=self.num_files)
-        file   = open(self.files[findex], 'r', encoding='utf8')
+        findex = random.randint(0, self.num_files-1)
+        
+        if self.data.ndJson:              
+            words = self.data.data[findex]['text_array'] 
+            if len(words) > 1:   
+            
+                word_ids = [self.data.word2id[w] for w in words if
+                            w in self.data.word2id and np.random.rand() < self.data.discards[self.data.word2id[w]]]
+  
+                boundary = np.random.randint(1, self.window_size)
+  
+                return [(u, v, self.data.getNegatives(v, 5)) for i, u in enumerate(word_ids) for j, v in
+                        enumerate(word_ids[max(i - boundary, 0):i + boundary]) if u != v]            
+        else:    
+            file = open(self.files[findex], 'r', encoding='utf8')
 
-        while True:
-            line = file.readline()
-            if not line:
-                self.file.seek(0, 0)
+            while True:
                 line = file.readline()
-
-            if len(line) > 1:
-                words = utilities.parseLine(line).split()
-
-                if len(words) > 1:
-                    word_ids = [self.data.word2id[w] for w in words if
-                                w in self.data.word2id and np.random.rand() < self.data.discards[self.data.word2id[w]]]
-
-                    boundary = np.random.randint(1, self.window_size)
-
-                    return [(u, v, self.data.getNegatives(v, 5)) for i, u in enumerate(word_ids) for j, v in
-                            enumerate(word_ids[max(i - boundary, 0):i + boundary]) if u != v]
+                if not line:
+                    self.file.seek(0, 0)
+                    line = file.readline()
+      
+                if len(line) > 1:
+                    words = utilities.parseLine(line).split()
+      
+                    if len(words) > 1:
+                        word_ids = [self.data.word2id[w] for w in words if
+                                    w in self.data.word2id and np.random.rand() < self.data.discards[self.data.word2id[w]]]
+      
+                        boundary = np.random.randint(1, self.window_size)
+      
+                        return [(u, v, self.data.getNegatives(v, 5)) for i, u in enumerate(word_ids) for j, v in
+                                enumerate(word_ids[max(i - boundary, 0):i + boundary]) if u != v]
 
     @staticmethod
     def collate(batches):
