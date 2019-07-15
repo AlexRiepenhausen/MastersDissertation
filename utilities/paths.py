@@ -69,10 +69,11 @@ class RosDataPaths():
     def __init__(self,num_train,num_test):
 
         # word2vec training raw documents
-        self.docpath = './data/w2v/training/documents/'
-        self.docfile_flats = './data/w2v/training/documents/flatted_examples.ndjson'
-        self.docfile_house = './data/w2v/training/documents/examples.ndjson'
-        self.colours = './data/w2v/training/documents/colours.txt'
+        self.docpath           = './data/w2v/training/documents/'
+        self.docfile_flats     = './data/w2v/training/documents/flatted_examples.ndjson'
+        self.docfile_house     = './data/w2v/training/documents/examples.ndjson'
+        self.docfile_duplicate = './data/w2v/training/documents/duplicates.ndjson'
+        self.colours           = './data/w2v/training/documents/colours.txt'
 
         # word2vec training data dictionaries
         self.dict_file = './data/w2v/training/dictionary/dict.vec'

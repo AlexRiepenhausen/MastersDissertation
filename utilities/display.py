@@ -22,9 +22,14 @@ class Display():
     
         index = self.getStartingPoint()
         
+       # for i in range(0,5000):
+           # self.data[i]['property_type'] = 'flat' 
+       # self.writeToFile()
+       # exit(0)
+        
         while index < self.numsamples:
             
-            #if self.data[index]['common_solum'] == 'amb':
+            #if self.data[index]['exclusive_strata'] == 'none':
                 #self.master = Tk()
                 #self.displayFile(index) 
                 #self.writeToFile()  
@@ -44,25 +49,75 @@ class Display():
     
     def displayAnnotationInfo(self):
     
-        char_count      = defaultdict(int)
-        property_type   = defaultdict(int)
-        exclusive_solum = defaultdict(int)
-        common_solum    = defaultdict(int)
-        additional_info = defaultdict(int)
+        property_type     = defaultdict(int)
+        tenement_steading = defaultdict(int)
+        exclusive_strata  = defaultdict(int)
+        exclusive_solum   = defaultdict(int)
+        common_strata     = defaultdict(int)
+        common_solum      = defaultdict(int)
+        additional_info   = defaultdict(int)  
+        char_count        = defaultdict(int)                        
             
         for i in range(0, self.numsamples): 
-        
+            
+            a = self.data[i]['property_type']
+            
+            if not self.houses:                
+                b = self.data[i]['tenement_steading']
+                c = self.data[i]['exclusive_strata']
+                
+            d = self.data[i]['exclusive_solum']
+            
+            if not self.houses:
+                e = self.data[i]['common_strata']
+                
+            f = self.data[i]['common_solum']
+            g = self.data[i]['additional_info']
+            
+            property_type[a]     += 1
+            
+            if not self.houses:
+                tenement_steading[b] += 1
+                exclusive_strata[c]  += 1
+                
+            exclusive_solum[d]   += 1
+            
+            if not self.houses:
+                common_strata[e] += 1
+                
+            common_solum[f]      += 1
+            additional_info[g]   += 1  
+                      
             char_count[i] = self.data[i]['char_count']
-            property_type[self.data[i]['property_type']] += 1
-            exclusive_solum[self.data[i]['exclusive_solum']] += 1
-            common_solum[self.data[i]['common_solum']] += 1
-            additional_info[self.data[i]['additional_info']] += 1
-        
+                      
+                      
         # histogram     
-        print(property_type)
-        print(exclusive_solum)
-        print(common_solum)
-        print(additional_info)
+        print("-----------------------------   Property Type   -----------------------------\n")
+        self.printDictionary(property_type)
+        
+        if not self.houses:
+            print("----------------------------- Tenement Steading -----------------------------\n")   
+            self.printDictionary(tenement_steading) 
+            print("----------------------------- Exclusive Strata  -----------------------------\n")
+            self.printDictionary(exclusive_strata)  
+            
+        print("-----------------------------  Exclusive Solum  -----------------------------\n")            
+        self.printDictionary(exclusive_solum)   
+        
+        if not self.houses:
+            print("-----------------------------   Common Strata   -----------------------------\n")
+            self.printDictionary(common_strata) 
+            print("-----------------------------    Common Solum   -----------------------------\n")   
+            self.printDictionary(common_solum)  
+               
+        print("-----------------------------  Additional Info  -----------------------------\n")               
+        self.printDictionary(additional_info) 
+        
+        
+    def printDictionary(self, dictionary): 
+        for item in dictionary:
+            print(" {:70} {:4d}".format(item, dictionary[item])) 
+        print("")       
          
                               
     def getStartingPoint(self):
@@ -86,7 +141,7 @@ class Display():
             
         
     def getKeywords(self):
-        path = './data/w2v/training/dictionary/keywords.txt'
+        path = './data/w2v/training/dictionary/display.txt'
         keywords = list()
         label = 0
         for line in open(path, encoding="utf8"):
@@ -97,7 +152,7 @@ class Display():
         
     def assignHighlights(self, t1):
     
-        colours = ["red","brown","pink","blue","yellow","mauve","green","grey"]
+        colours = ["red","brown","pink","blue","yellow","mauve","green","grey","purple","orange","violet","black","white"]
     
         keywords = self.getKeywords()
         
@@ -168,16 +223,17 @@ class Display():
         _ = _ + 'Number            : ' + str(index)      + '\n' 
         _ = _ + 'Character Count   : ' + str(char_count) + '\n' 
         _ = _ + 'Property Type     : ' + property_type   + '\n' 
-        _ = _ + 'Exclusive Solum   : ' + exclusive_solum + '\n' 
         
         if not self.houses:
             _ = _ + 'Tenement Steading : ' + tenement_steading + '\n' 
-            _ = _ + 'Common Solum      : ' + common_solum    + '\n' 
+            _ = _ + 'Exclusive Strata  : ' + exclusive_strata + '\n' 
+            
+        _ = _ + 'Exclusive Solum   : ' + exclusive_solum + '\n' 
         
         if not self.houses:
-            _ = _ + 'Exclusive Strata  : ' + exclusive_strata + '\n' 
-            _ = _ + 'Common Strata     : ' + common_strata    + '\n'               
-                
+            _ = _ + 'Common Strata     : ' + common_strata    + '\n'   
+            
+        _ = _ + 'Common Solum      : ' + common_solum    + '\n'                               
         _ = _ + 'Additional Info   : ' + additional_info + '\n\n'                
         _ = _ + self.data[index]['text'] + '\n\n' 
             
@@ -204,14 +260,19 @@ class Display():
 
         t1.tag_config("style", background="gainsboro", font=("Arial", "14", "bold"))
         
-        t1.tag_config("red",   background="red",    foreground="white")
-        t1.tag_config("brown", background="brown",  foreground="white")
-        t1.tag_config("pink",  background="pink",   foreground="white")
-        t1.tag_config("blue",  background="blue",   foreground="white")
-        t1.tag_config("yellow",background="yellow", foreground="red")
-        t1.tag_config("mauve", background="cornsilk2",   foreground="white")
-        t1.tag_config("green", background="green",  foreground="white")
-        t1.tag_config("grey",  background="grey",   foreground="white")
+        t1.tag_config("red",    background="red",         foreground="white")
+        t1.tag_config("black",  background="black",       foreground="white")
+        t1.tag_config("black",  background="white smoke", foreground="black")
+        t1.tag_config("brown",  background="brown",       foreground="white")
+        t1.tag_config("pink",   background="pink",        foreground="white")
+        t1.tag_config("blue",   background="blue",        foreground="white")
+        t1.tag_config("yellow", background="yellow",      foreground="red")
+        t1.tag_config("mauve",  background="cornsilk2",   foreground="black")
+        t1.tag_config("green",  background="green",       foreground="white")
+        t1.tag_config("orange", background="orange",      foreground="black")
+        t1.tag_config("grey",   background="grey",        foreground="white")
+        t1.tag_config("purple", background="purple1",     foreground="white")
+        t1.tag_config("violet", background="purple3",     foreground="white")
         
         self.assignHighlights(t1)
             

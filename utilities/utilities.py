@@ -11,6 +11,16 @@ from lstm.file2VecConverter import File2VecConverter
 from lstm.dataReaderVec import VectorDataset
 
 from enum import IntEnum
+                    
+class labelType(IntEnum):
+    property_type     = 0
+    tenement_steading = 1 
+    exclusive_strata  = 2                       
+    exclusive_solum   = 3
+    common_strata     = 4
+    common_solum      = 5
+    additional_info   = 6
+    char_count        = 7              
 
 
 class Mode(IntEnum):

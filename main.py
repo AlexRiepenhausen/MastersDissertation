@@ -2,8 +2,8 @@ import torch
 import time
 import ndjson
 import jsonlines
-from utilities.utilities import Mode, weightInit, Vec
-from utilities import utilities, plotgraphs, paths, display
+from utilities.utilities import Mode, weightInit, Vec, labelType
+from utilities import utilities, plotgraphs, paths, display, duplicator
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
@@ -13,23 +13,25 @@ if __name__ == '__main__':
 
     start   = time.time()
     loading = start
-
+    
     # init paths
     ros = paths.RosDataPaths(100, 100)
-
+    
     # set mode of operation
-    mode       = Mode.display
+    mode       = Mode.conversion
     save_model = True
     confusion  = True
     
+    
     if mode == Mode.display:
-        display = display.Display(ros.docpath, ros.docfile_flats, 1000, houses=False)
+        display = display.Display(ros.docpath, ros.docfile_flats, 200, houses=False)
         display.run()
         #display.displayAnnotationInfo()
         exit(0)
     
+    
     if mode == Mode.word2vec:
-
+    
         # word2vec training parameters
         w2v = Word2VecTrainer(ros.keyword_path,
                               primary_files=ros.docfile_house,
@@ -54,9 +56,12 @@ if __name__ == '__main__':
 
     if mode == Mode.conversion:
         # convert documents into vector representation and save to different file location
-        utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
+        # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
+        duplication = duplicator.Duplicate(ros.docfile_flats, ros.docfile_duplicate, 31)    
+        duplication.convert(100, ros.dict_file, labelSelection=labelType.exclusive_strata)
+        
         utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
-
+        exit(0)
 
     if mode == Mode.lstm:
 
