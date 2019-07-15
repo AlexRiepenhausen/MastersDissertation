@@ -89,19 +89,23 @@ class RosDataPaths():
         self.w2v_model_param = './data/w2v/training/models/' 
         
         # lstm training data
-        data = None
+        house = None  
+        flat  = None
         with open(self.docfile_house) as f:
-            data = ndjson.load(f)   
+            house = ndjson.load(f)   
+        with open(self.docfile_flats) as f:
+            flat  = ndjson.load(f)   
+                      
+        self.training = house[0:num_train] + flat[0:num_train]
         
-        self.training = data[0:num_train]
-        self.testing  = data[num_train:(num_train+num_test)]
+        self.testing  = house[num_train:(num_train+num_test)] + flat[num_train:(num_train+num_test)]
         
         self.vec_files_train = generateFilePaths('./data/lstm/training/vectors/trainset/train_', num_train, '.txt')
         self.vec_files_test  = generateFilePaths('./data/lstm/training/vectors/testset/test_', num_test, '.txt')
         
         self.vec_files_train_labels = generateFilePaths('./data/lstm/training/vectors/trainsetlabels/labels_', num_train, '.txt')
         self.vec_files_test_labels  = generateFilePaths('./data/lstm/training/vectors/testsetlabels/labels_', num_test, '.txt')
-      
+        
         
         # lstm training results
         self.lstm_csv_acc_dir   = './data/lstm/performance/csv_accuracies/'

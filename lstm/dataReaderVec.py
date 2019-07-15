@@ -25,7 +25,7 @@ class VectorDataset(Dataset):
         
   
     def getKeywords(self):
-        path = './data/w2v/training/dictionary/labels.txt'
+        path = './data/w2v/training/dictionary/house_flat.txt'
         keywords = dict()
         label = 0
         for line in open(path, encoding="utf8"):
@@ -67,20 +67,24 @@ class VectorDataset(Dataset):
         return allfiles   
         
     
-    def printLabelDictionary(self, lbl_hist):
+    def printLabelDictionary(self, lbl_hist, reverse_dict):
     
         print("| ---- Label Dictionary ----  |")
         print("|                             |")
         for item in lbl_hist:
-            print("| Label: {:2d}, Description: {} ".format(item, self.labels[item]))
+            print("| Label: {:2d}, Description: {} ".format(item, reverse_dict[item]))
         print("|                             |")      
 
 
     def labelHistogram(self):
+    
         lbl_hist = defaultdict(int)
+        reverse_dict = dict()
+        
         for label in self.labels:
-            lbl = self.keywords[label[1]]
+            lbl = self.keywords[label[0]]
             lbl_hist[lbl] += 1
+            reverse_dict[lbl] = label[0]
 
         lbl_hist = OrderedDict(sorted(lbl_hist.items()))
         
@@ -90,7 +94,7 @@ class VectorDataset(Dataset):
                 print("| Label: {:2d}, Frequency: {:4d} |".format(item, lbl_hist[item]))
         print("|                            |")
         
-        self.printLabelDictionary(lbl_hist) 
+        self.printLabelDictionary(lbl_hist, reverse_dict) 
         
         return lbl_hist    
         
@@ -100,7 +104,7 @@ class VectorDataset(Dataset):
         threshold  = random.uniform(0, 0.95)
     
         while True:
-            index      = random.randint(-1, self.num_files-1)
+            index      = random.randint(0, self.num_files-1)
             label_str  = self.labels[index][1]
             label      = self.keywords[label_str]
             
@@ -130,12 +134,12 @@ class VectorDataset(Dataset):
         label      = self.keywords[label_str]
     
         '''
-        
-        index      = self.drawSample()
+     
+        #index     = self.drawSample()
+        index      = random.randint(0, self.num_files-1)
         vectorfile = self.files[index]
-        label_str  = self.labels[index][1]
-        label      = self.keywords[label_str]
-
+        label_str  = self.labels[index]
+        label      = self.keywords[label_str[0]]
 
         return torch.tensor([np.asarray(vectorfile)]).float(), torch.tensor(label).long()
 

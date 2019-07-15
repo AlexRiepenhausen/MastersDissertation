@@ -29,13 +29,14 @@ class DataReader:
         self.supporting_files   = supporting_files
 
         self.file_paths = primary_files if supporting_files is None else primary_files + supporting_files
-        
-        self.data = None
+
+        self.data = dict()
 
         if self.ndJson:
-            with open(self.primary_files) as f:
-                self.data = ndjson.load(f)
-            self.readWordsNdJson(min_count)
+            for item in self.primary_files:              
+                with open(item) as f:
+                    self.data[item] = ndjson.load(f)
+            self.readWordsNdJson(min_count)      
         else:
             self.readWords(min_count)
             
@@ -44,24 +45,24 @@ class DataReader:
 
 
     def ndJson(self, primary_files):
-        if len(primary_files) == 1 and '.ndjson' in primary_files:
+        if '.ndjson' in primary_files[0]:
             return True
         else:
             return False
             
     
-    def getTextNdJson(self, index):
+    def getTextNdJson(self, item, index):
     
-        address    = utilities.parseLine(self.data[index]['address'][0]['prettyPrint']) 
-        text_array = utilities.parseLine(self.data[index]['text']).replace(address, 'address').split(' ') 
+        address    = utilities.parseLine(self.data[item][index]['address'][0]['prettyPrint']) 
+        text_array = utilities.parseLine(self.data[item][index]['text']).replace(address, 'address').split(' ') 
 
         result = list()
         
-        for item in text_array:
-            if len(item) > 0:
-                result.append(item)
+        for text in text_array:
+            if len(text) > 0:
+                result.append(text)
                 
-        self.data[index]['text_array'] = result  
+        self.data[item][index]['text_array'] = result  
 
 
     # read words and create word2id and id2word lookup tables
@@ -69,16 +70,17 @@ class DataReader:
 
         print("Setting up word2vec training")
         word_frequency = dict()
-
-        for i in range(0, 5000):
-
-            word_count = 0            
-            self.getTextNdJson(i)
-            
-            for word in self.data[i]['text_array']:
-                word_count += 1
-                self.token_count += 1
-                word_frequency[word] = word_frequency.get(word, 0) + 1
+        
+        for item in self.primary_files:
+            for i in range(0, 5000):
+    
+                word_count = 0            
+                self.getTextNdJson(item, i)
+                
+                for word in self.data[item][i]['text_array']:
+                    word_count += 1
+                    self.token_count += 1
+                    word_frequency[word] = word_frequency.get(word, 0) + 1
 
         wid = 0
         for w, c in word_frequency.items():
@@ -162,10 +164,12 @@ class Word2vecDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        findex = random.randint(0, self.num_files-1)
+        findex     = random.randint(0, self.num_files-1)
+        item_index = random.randint(0, len(self.data.primary_files)-1)
+        item       = self.data.primary_files[item_index]
         
         if self.data.ndJson:              
-            words = self.data.data[findex]['text_array'] 
+            words = self.data.data[item][findex]['text_array'] 
             if len(words) > 1:   
             
                 word_ids = [self.data.word2id[w] for w in words if

@@ -23,7 +23,7 @@ if __name__ == '__main__':
     confusion  = True
     
     if mode == Mode.display:
-        display = display.Display(ros.docpath, ros.docfile_flats, 1000, houses=False)
+        display = display.Display(ros.docpath, ros.docfile_flats, 5000, houses=False)
         display.run()
         #display.displayAnnotationInfo()
         exit(0)
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
         # word2vec training parameters
         w2v = Word2VecTrainer(ros.keyword_path,
-                              primary_files=ros.docfile_house,
+                              primary_files=[ros.docfile_house, ros.docfile_flats],
                               emb_dimension=50,
                               batch_size=32,
                               window_size=7,
@@ -55,23 +55,23 @@ if __name__ == '__main__':
     if mode == Mode.conversion:
         # convert documents into vector representation and save to different file location
         utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
-        utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
+        utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels,  ros.dict_file, unknown_vec=Vec.skipVec)
 
 
     if mode == Mode.lstm:
 
         # lstm training parameters
-        lstm = LSTMTrainer(ros.vec_files_test,
-                           ros.vec_files_test_labels,
-                           ros.vec_files_train,
+        lstm = LSTMTrainer(ros.vec_files_train,
                            ros.vec_files_train_labels,
+                           ros.vec_files_test,
+                           ros.vec_files_test_labels,
                            learning_rate=0.002,
-                           iterations_per_epoch=200,
-                           input_dim=61,
+                           iterations_per_epoch=500,
+                           input_dim=74,
                            seq_dim=6,
                            hidden_dim=30,
                            layer_dim=1,
-                           output_dim=13)
+                           output_dim=2)
 
         # train lstm
         loading = time.time()
@@ -90,14 +90,14 @@ if __name__ == '__main__':
         if confusion:
 
             # test set
-            labels, accuracy = lstm.evaluateModel(test_samples=100, test=True)
+            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=True)
             print("Accuracy Test Set: {}".format(accuracy))
-            class_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+            class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
 
             # training set
-            labels, accuracy = lstm.evaluateModel(test_samples=100, test=False)
+            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=False)
             print("Accuracy Training Set: {}".format(accuracy))
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')

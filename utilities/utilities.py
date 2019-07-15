@@ -89,9 +89,10 @@ def ndjsonVectorisation(data, vec_files, labels, dict_file, unknown_vec):
                 
         with open(labels[i], 'w') as f:
             f.write(data[i]['property_type'] + '\n')
-            f.write(data[i]['exclusive_solum']+ '\n')                   
-            f.write(data[i]['common_solum']+ '\n')  
-            f.write(data[i]['additional_info']+ '\n')
+            
+            #f.write(data[i]['exclusive_solum']+ '\n')                   
+            #f.write(data[i]['common_solum']+ '\n')  
+            #f.write(data[i]['additional_info']+ '\n')
         
             
     percent_unknown_words = num_unknown_words*100/total_num_words
