@@ -58,7 +58,7 @@ class LSTMTrainer:
             exit(0)
 
 
-    def evaluateModel(self, test_samples=100, test=False):
+    def evaluateModel(self, test_samples=100, test=True):
 
         correct = 0
         total = 0
@@ -149,7 +149,7 @@ class LSTMTrainer:
                 if self.runEvaluation(i):
                     losses.append(avg_loss/self.iterations_per_epoch)
                     if compute_accuracies==True:
-                        _, accuracy = self.evaluateModel(test_samples)
+                        _, accuracy = self.evaluateModel(test_samples, test=True)
                         accuracies.append(accuracy)
                     break
 

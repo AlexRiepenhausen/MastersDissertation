@@ -186,7 +186,7 @@ class Word2vecDataset(Dataset):
       
                 if len(line) > 1:
                     words = utilities.parseLine(line).split()
-      
+        
                     if len(words) > 1:
                         word_ids = [self.data.word2id[w] for w in words if
                                     w in self.data.word2id and np.random.rand() < self.data.discards[self.data.word2id[w]]]

@@ -3,7 +3,7 @@ import time
 import ndjson
 import jsonlines
 from utilities.utilities import Mode, weightInit, Vec, labelType
-from utilities import utilities, plotgraphs, paths, display, duplicator
+from utilities import utilities, plotgraphs, paths, display, duplicator, output
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
@@ -18,15 +18,19 @@ if __name__ == '__main__':
     ros = paths.RosDataPaths(100, 100)
     
     # set mode of operation
-    mode       = Mode.conversion
+    mode       = Mode.lstm
     save_model = True
     confusion  = True
     
+    #train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
+    #test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
+    
+    #exit(0)
     
     if mode == Mode.display:
-        display = display.Display(ros.docpath, ros.docfile_flats, 200, houses=False)
-        display.run()
-        #display.displayAnnotationInfo()
+        display = display.Display(ros.docpath, ros.docfile_house, 200, houses=True)
+        #display.run()
+        display.displayAnnotationInfo()
         exit(0)
     
     
@@ -34,7 +38,7 @@ if __name__ == '__main__':
     
         # word2vec training parameters
         w2v = Word2VecTrainer(ros.keyword_path,
-                              primary_files=ros.docfile_house,
+                              primary_files=ros.docfile_flats,
                               emb_dimension=50,
                               batch_size=32,
                               window_size=7,
@@ -43,7 +47,7 @@ if __name__ == '__main__':
                               
         # train standard word2vec -> train function outputs dictionary at the end
         loading  = time.time()
-        parcel_0 = w2v.train(ros.docfile_house, ros.dict_file, num_epochs=100)
+        parcel_0 = w2v.train(ros.docfile_flats, ros.dict_file, num_epochs=100)
         
         # write training results (learning curve) to csv
         utilities.resultsToCSV(parcel_0, w2v.toString(), ros.w2v_csv_lss_dir)
@@ -55,13 +59,16 @@ if __name__ == '__main__':
 
 
     if mode == Mode.conversion:
-        # convert documents into vector representation and save to different file location
-        # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
-        duplication = duplicator.Duplicate(ros.docfile_flats, ros.docfile_duplicate, 31)    
-        duplication.convert(100, ros.dict_file, labelSelection=labelType.exclusive_strata)
+    
+        # convert documents into vector representation and save to different file location                
+        duplication = duplicator.Duplicate(ros.docfile_flats, 1)    # 31 and 59
+        duplication.convert(100, ros.dict_file, ros.vec_files_train, ros.vec_files_train_labels,   0, labelSelection=None)
+        duplication.convert(100, ros.dict_file, ros.vec_files_test,  ros.vec_files_test_labels,  100, labelSelection=None)
         
-        utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
+        # utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
+        # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
         exit(0)
+
 
     if mode == Mode.lstm:
 
@@ -71,12 +78,12 @@ if __name__ == '__main__':
                            ros.vec_files_train,
                            ros.vec_files_train_labels,
                            learning_rate=0.002,
-                           iterations_per_epoch=200,
-                           input_dim=61,
+                           iterations_per_epoch=100,
+                           input_dim=75,
                            seq_dim=6,
                            hidden_dim=30,
                            layer_dim=1,
-                           output_dim=13)
+                           output_dim=2)
 
         # train lstm
         loading = time.time()
@@ -97,7 +104,7 @@ if __name__ == '__main__':
             # test set
             labels, accuracy = lstm.evaluateModel(test_samples=100, test=True)
             print("Accuracy Test Set: {}".format(accuracy))
-            class_names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+            class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
 

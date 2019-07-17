@@ -79,7 +79,7 @@ class VectorDataset(Dataset):
     def labelHistogram(self):
         lbl_hist = defaultdict(int)
         for label in self.labels:
-            lbl = self.keywords[label[1]]
+            lbl = self.keywords[label[2]]
             lbl_hist[lbl] += 1
 
         lbl_hist = OrderedDict(sorted(lbl_hist.items()))
@@ -97,11 +97,11 @@ class VectorDataset(Dataset):
         
     def drawSample(self):
     
-        threshold  = random.uniform(0, 0.95)
+        threshold  = random.uniform(0, 0.35)
     
         while True:
-            index      = random.randint(-1, self.num_files-1)
-            label_str  = self.labels[index][1]
+            index      = random.randint(0, self.num_files-1)
+            label_str  = self.labels[index][2]
             label      = self.keywords[label_str]
             
             draw_prob  = 1.0 - float(self.lbl_hist[label]/self.num_files)
@@ -113,7 +113,6 @@ class VectorDataset(Dataset):
 
     def __getitem__(self, idx):
     
-        '''
         index      = self.drawSample()
         
         vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
@@ -126,16 +125,21 @@ class VectorDataset(Dataset):
             vectors.append(arr)
             line = vectorfile.readline()  
             
-        label_str  = self.labels[index][1]
-        label      = self.keywords[label_str]
-    
-        '''
+        label_str  = self.labels[index][2]
         
+        '''
         index      = self.drawSample()
         vectorfile = self.files[index]
-        label_str  = self.labels[index][1]
+        label_str  = self.labels[index][2]
         label      = self.keywords[label_str]
-
-
-        return torch.tensor([np.asarray(vectorfile)]).float(), torch.tensor(label).long()
+        '''
+        
+        label = 0
+        if label_str == 'verbal':
+            print('verbal')
+            label = 1
+        else:
+            print('non-verbal')
+        
+        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor(label).long()
 

@@ -205,18 +205,24 @@ def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir=None):
 def readVectorsDict(dict_file_path, reverse=False):
 
     lines = []
+    num_lines = 0
     for line in open(dict_file_path, encoding="utf8"):
         lines.append(line)
+        num_lines = num_lines + 1
 
     num_vectors = np.int_(lines[0].split()[0])
     vector_size = np.int_(lines[0].split()[1])
     num_vec_req = np.int_(lines[0].split()[2])
 
     vector_dict = dict()
-    for i in range(1,num_vectors+1):
+    for i in range(1,num_lines):
         vector = lines[i].split()
         if not reverse:
-            vector_dict[vector[0]] = vector[1:]
+            cross_hatched = vector[0] + ' ' + vector[1]
+            if cross_hatched == 'cross hatched':
+                vector_dict['cross hatched'] = vector[2:]
+            else:
+                vector_dict[vector[0]] = vector[1:]
         if reverse:
             key = getReverseDictKey(vector)
             vector_dict[key] = vector[0]
@@ -294,3 +300,4 @@ def initLabels(self, label_file):
         labels.append(int(item))
 
     return np.asarray(labels)
+

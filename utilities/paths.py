@@ -72,7 +72,6 @@ class RosDataPaths():
         self.docpath           = './data/w2v/training/documents/'
         self.docfile_flats     = './data/w2v/training/documents/flatted_examples.ndjson'
         self.docfile_house     = './data/w2v/training/documents/examples.ndjson'
-        self.docfile_duplicate = './data/w2v/training/documents/duplicates.ndjson'
         self.colours           = './data/w2v/training/documents/colours.txt'
 
         # word2vec training data dictionaries
@@ -102,6 +101,12 @@ class RosDataPaths():
         
         self.vec_files_train_labels = generateFilePaths('./data/lstm/training/vectors/trainsetlabels/labels_', num_train, '.txt')
         self.vec_files_test_labels  = generateFilePaths('./data/lstm/training/vectors/testsetlabels/labels_', num_test, '.txt')
+        
+        #self.vec_files_train = './data/lstm/training/vectors/trainset/train_'
+        #self.vec_files_test  = './data/lstm/training/vectors/testset/test_'
+        
+        #self.vec_files_train_labels = './data/lstm/training/vectors/trainsetlabels/labels_'
+        #self.vec_files_test_labels  = './data/lstm/training/vectors/testsetlabels/labels_'
       
         
         # lstm training results

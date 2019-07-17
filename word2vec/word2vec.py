@@ -45,6 +45,8 @@ class SkipGramModel(nn.Module):
         embedding = self.u_embeddings.weight.cpu().data.numpy() 
         padding   = np.zeros((self.num_keywords,), dtype=float)  
         
+        keywords_used = list(self.keywords.keys())
+        
         with open(file_name, 'w') as f:
         
             f.write('%d %d %d\n' % (len(id2word), self.emb_dimension + self.num_keywords, max_num_words_file))
@@ -58,11 +60,23 @@ class SkipGramModel(nn.Module):
                     index          = self.emb_dimension + self.keywords[w]
                     key_vec[index] = 1.0
                     e = ' '.join(map(lambda x: str(x), key_vec))
+                    
+                    if w in keywords_used:
+                        keywords_used.remove(w)
+                        
                 else:  
                     word_vec = np.concatenate((embedding[wid], padding), axis=None)
                     e        = ' '.join(map(lambda x: str(x), word_vec))
                                         
                 f.write('%s %s\n' % (w, e))     
+            
+            if keywords_used:    
+                for remaining_item in keywords_used:
+                    key_vec        = np.zeros((self.emb_dimension + self.num_keywords,), dtype=float)   
+                    index          = self.emb_dimension + self.keywords[remaining_item]
+                    key_vec[index] = 1.0
+                    e = ' '.join(map(lambda x: str(x), key_vec))                    
+                    f.write('%s %s\n' % (remaining_item, e))
 
 
     # initialise (or refresh) weights
