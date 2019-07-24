@@ -9,10 +9,10 @@ from utilities.utilities import weightInit
 class LSTMTrainer:
 
     def __init__(self, train_files, train_labels, test_files, test_labels, learning_rate, iterations_per_epoch,
-                 input_dim, seq_dim, hidden_dim, layer_dim, output_dim):
+                 input_dim, category, hidden_dim, layer_dim, output_dim):
 
         self.input_dim  = input_dim
-        self.seq_dim    = seq_dim
+        self.category   = category
         self.hidden_dim = hidden_dim
         self.layer_dim  = layer_dim
         self.output_dim = output_dim
@@ -24,25 +24,19 @@ class LSTMTrainer:
         self.criterion  = nn.CrossEntropyLoss()
 
         self.learning_rate = learning_rate
-        self.optimiser = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
+        self.optimiser     = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
+        self.train_loader  = VectorDataset(train_files, train_labels, category)
+        self.test_loader   = VectorDataset(test_files, test_labels, category)
 
-        self.train_loader = VectorDataset(train_files, train_labels, seq_dim)
-        self.test_loader  = VectorDataset(test_files, test_labels, seq_dim) # identical to train_loader for now
-
-        self.to_string = "lr_{}_ipe_{}_in_{}_sq_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
+        self.to_string = "lr_{}_ipe_{}_in_{}_ct_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
                                                                        iterations_per_epoch,
                                                                        input_dim,
-                                                                       seq_dim,
+                                                                       category,
                                                                        hidden_dim,
                                                                        layer_dim,
-                                                                       output_dim)
+                                                                       output_dim)                                                                       
 
     def initDevice(self):
-
-        #if torch.cuda.device_count() > 1:
-            #print("Available GPUs: ", torch.cuda.device_count())
-            #self.model = torch.nn.DataParallel(self.model)
-
         if torch.cuda.is_available():
             self.model.cuda()
 
@@ -62,21 +56,21 @@ class LSTMTrainer:
 
         correct = 0
         total = 0
-
-        label_true = list()
-        label_pred = list()
-
+        
+        labels_true = list()
+        labels_pred = list()
+        
         loader = self.test_loader
         if test == False:
             loader = self.train_loader
-
+        
         for j, (vector_doc, label) in enumerate(loader):
         
             if torch.cuda.is_available():
-                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
+                vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
                 label = Variable(label.cuda())
             else:
-                vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
+                vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim))
                 label = Variable(label)
 
             # Forward pass only to get logits/output
@@ -95,12 +89,12 @@ class LSTMTrainer:
                 if predicted.cpu() == label.squeeze(dim=0).cpu():
                     correct += 1
 
-            label_true.append(label.squeeze(dim=0).cpu())
-            label_pred.append(predicted.cpu())
+            labels_true.append(label.squeeze(dim=0).cpu())
+            labels_pred.append(predicted.cpu())
 
             if j == test_samples-1:
                 accuracy = float(correct) / float(total)
-                return (label_true, label_pred), accuracy
+                return (labels_true, labels_pred), accuracy
 
 
     def train(self, num_epochs, compute_accuracies, test_samples=100, init=weightInit.fromScratch, model_path=None):
@@ -117,29 +111,30 @@ class LSTMTrainer:
             avg_loss = 0.0
 
             for i, (vector_doc, label) in enumerate(self.train_loader):
-
+                
                 if torch.cuda.is_available():
-                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim).cuda())
+                    vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
                     label = Variable(label.cuda())
                 else:
-                    vector_doc = Variable(vector_doc.view(len(vector_doc), -1, self.input_dim))
+                    vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim))
                     label = Variable(label)
-
+                
                 # Clear gradients w.r.t. parameters
                 self.optimiser.zero_grad()
-
+                
                 # Forward pass to get output/logits
                 # outputs.size() --> 1, 3
+                
                 outputs = self.model(vector_doc)
-
+                
                 # Calculate Loss: softmax --> cross entropy loss
                 loss = self.criterion(outputs.unsqueeze(dim=0), label.unsqueeze(dim=0))
-
+                
                 if torch.cuda.is_available():
                     loss.cuda()
                 # Getting gradients w.r.t. parameters
                 loss.backward()
-
+      
                 # Updating parameters
                 self.optimiser.step()
 

@@ -29,7 +29,7 @@ class Display():
         
         while index < self.numsamples:
             
-            #if self.data[index]['exclusive_strata'] == 'none':
+            #if self.data[index]['char_count'] == 1908:
                 #self.master = Tk()
                 #self.displayFile(index) 
                 #self.writeToFile()  

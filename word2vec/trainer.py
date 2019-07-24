@@ -10,6 +10,7 @@ from word2vec.word2vec import SkipGramModel
 from utilities.utilities import weightInit
 
 class Word2VecTrainer:
+
     def __init__(self, keyword_path, primary_files, supporting_files=None,
                  emb_dimension=10, batch_size=32, window_size=5, initial_lr=0.1, min_count=1):
 

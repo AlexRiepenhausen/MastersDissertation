@@ -2,11 +2,22 @@ import torch
 import time
 import ndjson
 import jsonlines
+from enum import IntEnum
 from utilities.utilities import Mode, weightInit, Vec, labelType
 from utilities import utilities, plotgraphs, paths, display, duplicator, output
 from word2vec.trainer import Word2VecTrainer
 from lstm.trainer import LSTMTrainer
 from similarity.cosine import CosineSimilarity
+
+class labelType(IntEnum):
+    property_type     = 0
+    tenement_steading = 1 
+    exclusive_strata  = 2                       
+    exclusive_solum   = 3
+    common_strata     = 4
+    common_solum      = 5
+    additional_info   = 6
+    char_count        = 7  
 
 
 if __name__ == '__main__':
@@ -25,12 +36,10 @@ if __name__ == '__main__':
     #train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
     #test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
     
-    #exit(0)
-    
     if mode == Mode.display:
-        display = display.Display(ros.docpath, ros.docfile_house, 200, houses=True)
-        #display.run()
-        display.displayAnnotationInfo()
+        display = display.Display(ros.docpath, ros.docfile_flats, 200, houses=False)
+        display.run()
+        #display.displayAnnotationInfo()
         exit(0)
     
     
@@ -77,17 +86,17 @@ if __name__ == '__main__':
                            ros.vec_files_test_labels,
                            ros.vec_files_train,
                            ros.vec_files_train_labels,
-                           learning_rate=0.002,
+                           learning_rate=0.1,
                            iterations_per_epoch=100,
                            input_dim=75,
-                           seq_dim=6,
+                           category=labelType.exclusive_strata,
                            hidden_dim=30,
                            layer_dim=1,
                            output_dim=2)
 
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=100, compute_accuracies=True)
+        parcel  = lstm.train(num_epochs=100, compute_accuracies=False)
         #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
         # save model if specified
@@ -100,27 +109,27 @@ if __name__ == '__main__':
 
         # write confusion matrix as image to output
         if confusion:
-
+            
             # test set
             labels, accuracy = lstm.evaluateModel(test_samples=100, test=True)
             print("Accuracy Test Set: {}".format(accuracy))
             class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
-
+            
             # training set
             labels, accuracy = lstm.evaluateModel(test_samples=100, test=False)
             print("Accuracy Training Set: {}".format(accuracy))
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
-
-
+            
+            
     if mode == Mode.similarity:
         path = ros.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
         measure_similarity = CosineSimilarity(p.imdb_files_neg_train, ros.dict_file)
         measure_similarity.angularDistancesToFile(path)
-
-
+            
+            
     if mode == Mode.plot:
 
         w2v_lss_y_range  = [ 0.0, 4.0]
