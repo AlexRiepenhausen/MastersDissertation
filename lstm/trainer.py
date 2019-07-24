@@ -64,7 +64,7 @@ class LSTMTrainer:
         if test == False:
             loader = self.train_loader
         
-        for j, (vector_doc, label) in enumerate(loader):
+        for j, (vector_doc, label, colour_pair) in enumerate(loader):
         
             if torch.cuda.is_available():
                 vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
@@ -110,7 +110,7 @@ class LSTMTrainer:
 
             avg_loss = 0.0
 
-            for i, (vector_doc, label) in enumerate(self.train_loader):
+            for i, (vector_doc, label, colour_pair) in enumerate(self.train_loader):
                 
                 if torch.cuda.is_available():
                     vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())

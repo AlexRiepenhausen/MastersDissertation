@@ -22,12 +22,12 @@ class Duplicate():
         self.shuffled_colours = self.getDuplicationConfig(self.colourkeys)
         self.shuffled_styles  = self.getDuplicationConfig(self.stylekeys)
      
-
+    
     def readFromFile(self):
         with open(self.filename) as f:  
             return ndjson.load(f)  
             
-    
+            
     def getKeywords(self, start, end):
     
         path = './data/w2v/training/dictionary/keywords.txt'
@@ -155,6 +155,8 @@ class Duplicate():
         common_solum        = 5
         additional_info     = 6
         char_count          = 7 
+        index               = 8
+        id                  = 9
         ''' 
     
         num_unknown_words   = 0
@@ -209,6 +211,8 @@ class Duplicate():
                     
                     additional_info   = self.data[j]['additional_info'] 
                     char_count        = self.data[j]['char_count'] 
+                    index             = self.data[j]['index'] 
+                    id                = self.data[j]['id'] 
     
                     
                     f.write(property_type     + '\n')  
@@ -221,7 +225,8 @@ class Duplicate():
                     
                     f.write(additional_info   + '\n')
                     f.write(str(char_count)   + '\n') 
-                    
+                    f.write(index             + '\n')
+                    f.write(id                + '\n')                     
                     
                 file_index = file_index + 1 
                     

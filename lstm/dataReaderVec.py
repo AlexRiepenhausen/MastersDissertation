@@ -19,6 +19,7 @@ class labelType(IntEnum):
 
 class VectorDataset(Dataset):
 
+
     def __init__(self, file_paths, label_path, category, batch_size=1):
     
         self.category   = category 
@@ -34,14 +35,14 @@ class VectorDataset(Dataset):
         
         self.adaptor    = ColourToOwnership()
         
-        self.repetition = 1
-        self.rep_count  = 0
-        self.index      = 0
-        
+        self.positive_samples = 0
+        self.negative_samples = 0     
+               
 
     def __len__(self):
         return self.num_files/self.batch_size
                
+                
         
     def getLabelsFromFiles(self, label_path):
     
@@ -55,6 +56,7 @@ class VectorDataset(Dataset):
         return labels
 
 
+
     def labelHistogram(self):
     
         lbl_hist = defaultdict(int)
@@ -65,7 +67,8 @@ class VectorDataset(Dataset):
             lbl_hist[key] += 1    
         
         return lbl_hist  
-        
+           
+    
     
     def ownership(self, label):
         if label == 'none':
@@ -74,37 +77,66 @@ class VectorDataset(Dataset):
             return "no ownership"
         else: 
             return "ownership" 
-        
-  
-    def drawSample(self):
+               
+      
+                 
+    def balancedSampleDraw(self):
     
-        prob0 = float(self.lbl_hist["no ownership"]/self.num_files) # high  probability
-        prob1 = float(self.lbl_hist["ownership"]/self.num_files)    # lower probability
+        if self.positive_samples > self.negative_samples: 
+            index, classlabel = self.drawNegativeSample()      
+            return index, classlabel                                
+        else:    
+            index, classlabel = self.drawPositiveSample()  
+            return index, classlabel        
+          
+    
+    
+    def drawPositiveSample(self): 
+         
+        index = self.drawRandomSample("ownership") 
         
-        lowth     = prob0*prob0/prob1        
-        
-        draw_prob = random.uniform(0.0, lowth)
+        while self.labels[index][labelType.property_type] != 'flat':   
+            index = self.drawRandomSample("ownership") 
+                    
+        self.positive_samples += 1      
             
-        while True:
+        return index, "ownership"
+        
+              
+        
+    def drawNegativeSample(self):
+         
+        index = self.drawRandomSample("no ownership") 
+        
+        while self.labels[index][labelType.property_type] != 'flat':   
+            index = self.drawRandomSample("no ownership")
+            
+        self.negative_samples += 1
+        
+        return index, "no ownership"
+                     
+    
+  
+    def drawRandomSample(self, classification_label):
+    
+        key = ""
+     
+        while key != classification_label:
             
             index = random.randint(0, self.num_files-1)
             label = self.labels[index][self.category]   
             key   = self.ownership(label)
+                  
+        return index
+                      
+                
             
-            if key == "no ownership":
-                if draw_prob > prob0: 
-                    return index   
-            else:
-                return index
-            
-            
-    def loadVectors(self):
+    def loadVectors(self, index, classlabel):
         
         vectors    = list()
         
-        vectorfile = open(self.file_paths[self.index], 'r', encoding='utf8')
+        vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
         line       = vectorfile.readline()
-        labels     = self.labels[self.index][self.category]   
               
         position   = 0    
         parcel     = list()
@@ -124,11 +156,39 @@ class VectorDataset(Dataset):
             position += 1
             
             line = vectorfile.readline()   
+            
+         
+        # get the tags       
+        tags    = self.getCurrentTags(parcel)
+        
+        # assign ownership to tags
+        tags    = self.assignOwnershipToTags(index, tags)
+        
+        # get index denoting required ownership type specified by classlabel
+        requiredLabelIndex = self.getRequiredLabelIndex(classlabel, tags)
+                          
+        # remove irrelevant colours from vectors          
+        vectors = self.removeIrrelevantColours(requiredLabelIndex, tags, vectors)
+        
+        return vectors, tags[requiredLabelIndex]
+ 
+ 
+    def getRequiredLabelIndex(self, classlabel, tags):
+    
+        for i in range(0, len(tags)):
+            if tags[i][2] == classlabel:
+                return i
                 
+        # if classlabel does not exist
+        return 0    
+ 
+ 
+    def getCurrentTags(self, parcel):
+    
         tags     = list()
         prev_pos = parcel[0][0]
-        prev_key = parcel[0][1]
-        
+        prev_key = parcel[0][1]    
+    
         for i in range(1,len(parcel)):
         
             pos = parcel[i][0]
@@ -139,29 +199,40 @@ class VectorDataset(Dataset):
                 tags.append([tag,[prev_pos, pos]])
                 
             prev_pos = parcel[i][0]
-            prev_key = parcel[i][1]
-        
-        # assign the labels
-        label_array     = labels.split(", ")
-        self.repetition = len(tags)
+            prev_key = parcel[i][1] 
+            
+        return tags   
+ 
+ 
+ 
+    def assignOwnershipToTags(self, index, tags):
+    
+        labels      = self.labels[index][self.category]
+        label_array = labels.split(", ")
         
         for i in range(0, len(tags)):
             if tags[i][0] not in label_array:
                 tags[i].append("no ownership")
             else:
-                tags[i].append("ownership") 
-                          
-        # remove irrelevant colours []    
+                tags[i].append("ownership")  
+                
+        return tags
+            
+    
+    
+    def removeIrrelevantColours(self, requiredLabelIndex, tags, vectors):
+    
         for tag in tags:
-            if tag[0] != tags[self.rep_count][0]:
+            if tag[0] != tags[requiredLabelIndex][0]:
                 positions = tag[1]
                 for position in positions:
                     vectors[position] = [] 
         
-        vectors = [x for x in vectors if x != []]
+        vectors = [x for x in vectors if x != []] 
         
-        return vectors, tags[self.rep_count][2]
+        return vectors       
        
+                
         
     def labelConversion(self, label):
 
@@ -171,29 +242,21 @@ class VectorDataset(Dataset):
             return 0
             
             
-    def debug(self, label, length):
-        print("Index: {} Vectorlen: {}".format(self.index, length))
-        print("Count: {} RepLength: {}".format(self.rep_count, self.repetition))
-        print("Label: {} Numerical: {}".format(label, self.labelConversion(label)))     
+            
+    def debug(self, index, label, length):
+        print("Index: {} Vectorlen: {}".format(index, length))
+        print("Label: {} Numerical: {}".format(label, self.labelConversion(label)))
+        print("Pos {} Neg {}, {} {}".format(self.positive_samples, self.negative_samples, label[0], self.labelConversion(label[2])))     
                        
                 
+                
     def __getitem__(self, idx):
-    
-        # if memory error, load the labels as well
-        if self.rep_count == self.repetition-1:     
-            
-            self.index = self.drawSample() 
-            
-            while self.labels[self.index][labelType.property_type] != 'flat':   
-                self.index = self.drawSample()
-            
-            self.rep_count = 0     
-                                                                   
-        else:
-            self.rep_count += 1
-                    
-        vectors, label = self.loadVectors()
+      
+        index, classlabel = self.balancedSampleDraw()                         
+        vectors, label    = self.loadVectors(index, classlabel)
+        
+        #self.debug(index, label[0], len(vectors))
 
-        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(self.labelConversion(label)).long()  
+        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(self.labelConversion(label[2])).long(), label[0]  
         
 

@@ -87,7 +87,7 @@ if __name__ == '__main__':
                            ros.vec_files_train,
                            ros.vec_files_train_labels,
                            learning_rate=0.1,
-                           iterations_per_epoch=100,
+                           iterations_per_epoch=10,
                            input_dim=75,
                            category=labelType.exclusive_strata,
                            hidden_dim=30,
@@ -96,8 +96,7 @@ if __name__ == '__main__':
 
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=100, compute_accuracies=False)
-        #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
+        parcel  = lstm.train(num_epochs=1, compute_accuracies=False)
 
         # save model if specified
         if save_model:
@@ -131,18 +130,18 @@ if __name__ == '__main__':
             
             
     if mode == Mode.plot:
-
+        
         w2v_lss_y_range  = [ 0.0, 4.0]
         lstm_lss_y_range = [-0.2, 2.0]
         lstm_acc_y_range = [-0.1, 1.1]
-
+        
         plotgraphs.convertCsvToGraphs(ros.w2v_csv_lss_dir,  ros.w2v_graph_lss_dir,  w2v_lss_y_range,  'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(ros.lstm_csv_lss_dir, ros.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
         plotgraphs.convertCsvToGraphs(ros.lstm_csv_acc_dir, ros.lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
-
-
+        
+        
     end = time.time()
-
+    
     print("Time needed for loading data {} seconds".format(round(loading - start)))
     print("Time needed for processing {} seconds".format(round(end - loading)))
     print("Total time {} seconds".format(round(end - start)))
