@@ -20,27 +20,29 @@ class labelType(IntEnum):
 class VectorDataset(Dataset):
 
 
-    def __init__(self, file_paths, label_path, category, batch_size=1):
+    def __init__(self, file_paths, label_path, category, loadertype="train"):
     
         self.category   = category 
+        self.loadertype = loadertype
     
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
-        self.batch_size = batch_size
         
         self.labels     = self.getLabelsFromFiles(label_path)  
 
-        # print label distribution
         self.lbl_hist   = self.labelHistogram()  
         
         self.adaptor    = ColourToOwnership()
         
         self.positive_samples = 0
-        self.negative_samples = 0     
+        self.negative_samples = 0    
+        
+        self.current_test_sample = 0 
                
 
+
     def __len__(self):
-        return self.num_files/self.batch_size
+        return self.num_files
                
                 
         
@@ -77,7 +79,25 @@ class VectorDataset(Dataset):
             return "no ownership"
         else: 
             return "ownership" 
-               
+     
+    
+    def testingSampleDraw(self):
+    
+        index = self.current_test_sample
+           
+        if self.labels[index][labelType.property_type] != 'flat':             
+                 
+            index = random.randint(0, self.num_files-1)  
+            while self.labels[index][labelType.property_type] != 'flat':   
+                index = random.randint(0, self.num_files-1) 
+                
+        label      = self.labels[index][self.category]   
+        classlabel = self.ownership(label)   
+            
+        self.current_test_sample += 1   
+            
+        return index, classlabel                
+                            
       
                  
     def balancedSampleDraw(self):
@@ -133,36 +153,14 @@ class VectorDataset(Dataset):
             
     def loadVectors(self, index, classlabel):
         
-        vectors    = list()
-        
-        vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
-        line       = vectorfile.readline()
-              
-        position   = 0    
-        parcel     = list()
-        
-        while line:
-            
-            arr = np.fromstring(line, dtype=float, sep=" ")
-            vectors.append(arr)
-            
-            difference = list(set(arr) - set(self.adaptor.padding))
-            
-            if len(difference) == 1:
-            
-                key = self.adaptor.getIndex(arr)
-                parcel.append((position, self.adaptor.reverseDictionary[key]))
-                
-            position += 1
-            
-            line = vectorfile.readline()   
-            
-         
+        # get the raw vectors and the colour pair positions within the parcel
+        vectors, parcel = self.getVectors(index)
+                 
         # get the tags       
-        tags    = self.getCurrentTags(parcel)
+        tags = self.getCurrentTags(parcel)
         
         # assign ownership to tags
-        tags    = self.assignOwnershipToTags(index, tags)
+        tags = self.assignOwnershipToTags(index, tags)
         
         # get index denoting required ownership type specified by classlabel
         requiredLabelIndex = self.getRequiredLabelIndex(classlabel, tags)
@@ -171,16 +169,60 @@ class VectorDataset(Dataset):
         vectors = self.removeIrrelevantColours(requiredLabelIndex, tags, vectors)
         
         return vectors, tags[requiredLabelIndex]
+        
+        
+        
+    def getVectors(self, index):
+    
+        vectors    = list()
+        
+        vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
+        line       = vectorfile.readline()
+              
+        position   = 0    
+        parcel     = list()
+    
+        while line:
+            
+            arr = np.fromstring(line, dtype=float, sep=" ")
+            vectors.append(arr)
+            
+            if self.colourPairIdentified(arr):
+            
+                key = self.adaptor.getIndex(arr)
+                parcel.append((position, self.adaptor.reverseDictionary[key]))
+                
+            position += 1
+            
+            line = vectorfile.readline()     
+            
+        return vectors, parcel  
+        
+        
+        
+    def colourPairIdentified(self, arr):     
+        difference = list(set(arr) - set(self.adaptor.padding)) 
+        if len(difference) == 1:
+            return True
+        else:
+            return False
+ 
  
  
     def getRequiredLabelIndex(self, classlabel, tags):
     
-        for i in range(0, len(tags)):
-            if tags[i][2] == classlabel:
-                return i
+        if classlabel == "no ownership":
+            classlabel_index = random.randint(0, len(tags)-1)
+            return classlabel_index
+            
+        if classlabel == "ownership":
+            for i in range(0, len(tags)):
+                if tags[i][2] == classlabel:
+                    return i
                 
-        # if classlabel does not exist
+        # if classlabel does not exist, return 0 as default
         return 0    
+ 
  
  
     def getCurrentTags(self, parcel):
@@ -243,20 +285,31 @@ class VectorDataset(Dataset):
             
             
             
-    def debug(self, index, label, length):
-        print("Index: {} Vectorlen: {}".format(index, length))
-        print("Label: {} Numerical: {}".format(label, self.labelConversion(label)))
-        print("Pos {} Neg {}, {} {}".format(self.positive_samples, self.negative_samples, label[0], self.labelConversion(label[2])))     
+    def debug(self, index, classlabel, label):
+        print("Index: {} Class: {} Label: {}".format(index, classlabel, label))
+        print("Pos:   {} Neg:   {}".format(self.positive_samples, self.negative_samples))  
+        print("{} is {}".format(label[0], self.labelConversion(label[2])))
+        print("------------------------------------------------")
                        
                 
                 
     def __getitem__(self, idx):
-      
-        index, classlabel = self.balancedSampleDraw()                         
-        vectors, label    = self.loadVectors(index, classlabel)
-        
-        #self.debug(index, label[0], len(vectors))
+    
+        index = 0
+        classlabel = "ownership"
 
-        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(self.labelConversion(label[2])).long(), label[0]  
+        if self.loadertype == "train":
+            index, classlabel = self.balancedSampleDraw()    
+        else:
+            index, classlabel = self.testingSampleDraw()
         
+                                  
+        vectors, label = self.loadVectors(index, classlabel)
+    
+        #self.debug(index, classlabel, label)
+    
+        colour_pair = label[0]
+        numeric_lbl = self.labelConversion(label[2])
+
+        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
 

@@ -25,8 +25,8 @@ class LSTMTrainer:
 
         self.learning_rate = learning_rate
         self.optimiser     = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
-        self.train_loader  = VectorDataset(train_files, train_labels, category)
-        self.test_loader   = VectorDataset(test_files, test_labels, category)
+        self.train_loader  = VectorDataset(train_files, train_labels, category, loadertype="train")
+        self.test_loader   = VectorDataset(test_files, test_labels, category, loadertype="test")
 
         self.to_string = "lr_{}_ipe_{}_in_{}_ct_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
                                                                        iterations_per_epoch,

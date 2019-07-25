@@ -65,7 +65,7 @@ if __name__ == '__main__':
         if save_model:
             path = ros.w2v_model_param + w2v.toString() + '_date_' + utilities.timeStampedFileName()
             torch.save(w2v.skip_gram_model.state_dict(), path)
-
+        
 
     if mode == Mode.conversion:
     
@@ -82,12 +82,12 @@ if __name__ == '__main__':
     if mode == Mode.lstm:
 
         # lstm training parameters
-        lstm = LSTMTrainer(ros.vec_files_test,
-                           ros.vec_files_test_labels,
-                           ros.vec_files_train,
+        lstm = LSTMTrainer(ros.vec_files_train,
                            ros.vec_files_train_labels,
-                           learning_rate=0.1,
-                           iterations_per_epoch=10,
+                           ros.vec_files_test,
+                           ros.vec_files_test_labels,
+                           learning_rate=0.01,
+                           iterations_per_epoch=100,
                            input_dim=75,
                            category=labelType.exclusive_strata,
                            hidden_dim=30,
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=1, compute_accuracies=False)
+        parcel  = lstm.train(num_epochs=100, compute_accuracies=False)
 
         # save model if specified
         if save_model:
