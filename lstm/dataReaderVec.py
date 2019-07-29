@@ -87,23 +87,83 @@ class VectorDataset(Dataset):
     def testingSampleDraw(self):
     
         index = self.current_test_sample
-           
-        if self.labels[index][labelType.property_type] != 'flat':             
-                 
-            index = random.randint(0, self.num_files-1)  
-            while self.labels[index][labelType.property_type] != 'flat':   
-                index = random.randint(0, self.num_files-1) 
-                
-        label      = self.labels[index][self.category]   
-        classlabel = self.ownership(label)   
-            
-        self.current_test_sample += 1   
+               
+        while self.labels[index][labelType.property_type] != 'flat': 
+            index += 1
+            self.current_test_sample += 1
+                                                       
+        vectors, parcel    = self.getVectors(index)                  
+        tags               = self.getCurrentTags(parcel)                   
+        tags               = self.assignOwnershipToTags(index, tags)  
+        classlabel         = self.decideLabel(tags)
+        requiredLabelIndex = self.getLabelIndexTest(tags, classlabel)
+        vectors            = self.removeIrrelevantColours(requiredLabelIndex, tags, vectors)
+        
+        self.current_test_sample += 1 
         
         if self.current_test_sample == self.num_files:
             self.current_test_sample = 0
+        
+        return vectors, tags[requiredLabelIndex]     
+        
+     
+    
+    def getLabelIndexTest(self, tags, classlabel):
             
-        return index, classlabel                
-                            
+        indices = list()           
+        
+        for i in range(0, len(tags)):
+            if tags[i][2] == classlabel:
+                indices.append(i)
+        
+        classlabel_index = random.randint(0, len(indices)-1)
+        
+        if classlabel == "ownership":
+            self.positive_samples += 1
+            
+        if classlabel == "no ownership":
+            self.negative_samples += 1
+        
+        return indices[classlabel_index]        
+         
+     
+     
+    def decideLabel(self, tags):
+    
+        both         = False
+        ownership    = False
+        no_ownership = False
+        
+        for tag in tags:
+            if tag[2] == "ownership":
+                ownership = True
+            if tag[2] == "no ownership":
+                no_ownership = True
+                
+        if ownership == True and no_ownership == True:
+            both = True                                            
+
+        if both:
+            if self.positive_samples > self.negative_samples:
+                return "no ownership"
+            else:
+                return "ownership"
+        
+        if ownership:
+            return "ownership"
+            
+        if no_ownership:
+            return "no ownership"   
+     
+     
+ 
+    def getOwnershipIndices(self, tags, classlabel):
+        ownership_ind = list()
+        for i in range(0, len(tags)):
+            if tags[i][2] == classlabel:
+                ownership_ind.append(i)  
+        return ownership_ind                                                                                                         
+      
       
                  
     def balancedSampleDraw(self):
@@ -235,10 +295,10 @@ class VectorDataset(Dataset):
         else:
             return False
  
- 
+   
  
     def getRequiredLabelIndex(self, classlabel, tags):
-            
+
         if classlabel == "ownership":
             
             ownership_indices = list()           
@@ -251,6 +311,8 @@ class VectorDataset(Dataset):
                     non_ownership_ind.append(i)
                     
             self.previous_positive["non_positive_samples"] = non_ownership_ind
+            
+            classlabel_index = 0
             
             classlabel_index = random.randint(0, len(ownership_indices)-1)
             
@@ -339,17 +401,14 @@ class VectorDataset(Dataset):
         classlabel = "ownership"
 
         if self.loadertype == "train":
-            index, classlabel = self.balancedSampleDraw()    
+            index, classlabel = self.balancedSampleDraw()  
+            vectors, label    = self.loadVectors(index, classlabel)
+            colour_pair       = label[0]
+            numeric_lbl       = self.labelConversion(label[2])  
+            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
         else:
-            index, classlabel = self.testingSampleDraw()
-        
-                                      
-        vectors, label = self.loadVectors(index, classlabel)
-    
-        #self.debug(index, classlabel, label)
-    
-        colour_pair = label[0]
-        numeric_lbl = self.labelConversion(label[2])
-
-        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
+            vectors, label    = self.testingSampleDraw()    
+            colour_pair       = label[0]
+            numeric_lbl       = self.labelConversion(label[2])                         
+            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
 

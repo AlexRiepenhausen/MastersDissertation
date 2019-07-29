@@ -102,7 +102,7 @@ class LSTMTrainer:
                     pos_correct += 1
                     
             labels_true.append(numerical_label)
-            labels_pred.append(predicted.cpu())          
+            labels_pred.append(predicted.cpu())     
 
             if j == test_samples-1:
                 accuracy = dict()
