@@ -137,21 +137,32 @@ class VectorDataset(Dataset):
         # 50% chance of drawing previous positve sample and looking at the negatives
         previous_len = len(self.previous_positive["non_positive_samples"])
         
-        if random.randint(0, 1) == 1 and previous_len > 0:
+        if previous_len > 0:
         
             self.negative_samples += 1
-            return self.previous_positive["file_index"], "previous"
+            return self.previous_positive["file_index"], "no ownership"
                 
         else:
+        
+            while True:
          
-            index = self.drawRandomSample("no ownership") 
-            
-            while self.labels[index][labelType.property_type] != 'flat':   
-                index = self.drawRandomSample("no ownership")
+                non_ownership_ind = list()
                 
-            self.negative_samples += 1
-            
-            return index, "no ownership"
+                # get the raw vectors and the colour pair positions within the parcel
+                index             = self.drawRandomSample("ownership")
+                vectors, parcel   = self.getVectors(index)                  
+                tags              = self.getCurrentTags(parcel)                   
+                tags              = self.assignOwnershipToTags(index, tags)
+                            
+                for i in range(0, len(tags)):
+                    if tags[i][2] == "no ownership":
+                        non_ownership_ind.append(i)
+                        
+                if len(non_ownership_ind) > 0:
+                    self.previous_positive["non_positive_samples"] = non_ownership_ind
+                    self.negative_samples += 1
+                    return index, "no ownership"
+    
     
   
     def drawRandomSample(self, classification_label):
@@ -227,10 +238,6 @@ class VectorDataset(Dataset):
  
  
     def getRequiredLabelIndex(self, classlabel, tags):
-          
-        if classlabel == "no ownership":
-            classlabel_index = random.randint(0, len(tags)-1)
-            return classlabel_index
             
         if classlabel == "ownership":
             
@@ -249,7 +256,7 @@ class VectorDataset(Dataset):
             
             return ownership_indices[classlabel_index]        
             
-        if classlabel == "previous":
+        if classlabel == "no ownership":
             classlabel_index = random.randint(0, len(self.previous_positive["non_positive_samples"])-1)                 
             return self.previous_positive["non_positive_samples"][classlabel_index]     
                 

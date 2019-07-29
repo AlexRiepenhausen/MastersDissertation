@@ -8,7 +8,7 @@ from utilities.utilities import readVectorsDict, generateFilePaths, getTextNdJso
 from tkinter import *
 from collections import defaultdict
 from utilities.utilities import labelType
-
+    
 class Duplicate():
 
     def __init__(self, filename, duplicate_factor):
@@ -99,10 +99,24 @@ class Duplicate():
             for i in range(starting_point, starting_point + num_files):
                 selected.append(i) 
     
-        if labelSelection == labelType.exclusive_strata:        
-            for i in range(starting_point, starting_point + num_files):
-                if self.data[i]['property_type'] == 'flat':
-                    if self.data[i]['exclusive_strata'] != 'verbal':
+        ownership_type = None
+    
+        if labelSelection == labelType.exclusive_strata:  
+            ownership_type = 'exclusive_strata'
+            
+        if labelSelection == labelType.exclusive_solum:  
+            ownership_type = 'exclusive_solum'
+            
+        if labelSelection == labelType.common_strata:  
+            ownership_type = 'common_strata'
+            
+        if labelSelection == labelType.common_solum:  
+            ownership_type = 'common_solum'            
+              
+        for i in range(starting_point, starting_point + num_files):
+            if self.data[i]['property_type'] == 'flat':
+                if self.data[i][ownership_type] != 'verbal':
+                    if self.data[i][ownership_type] != 'none':
                         selected.append(i) 
             
         print("Total of {} documents selected out of {}, which is {} %".format(len(selected), num_files, float(len(selected)*100/num_files)))

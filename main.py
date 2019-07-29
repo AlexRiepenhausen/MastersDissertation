@@ -30,12 +30,12 @@ if __name__ == '__main__':
     ros = paths.RosDataPaths(1000, 100) # num_train, num_test
     
     # set mode of operation
-    mode       = Mode.plot
+    mode       = Mode.lstm
     save_model = True
     confusion  = True
     
-    #train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
-    #test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
+    # train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
+    # test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
     
     if mode == Mode.display:
         display = display.Display(ros.docpath, ros.docfile_flats, 200, houses=False)
@@ -69,11 +69,11 @@ if __name__ == '__main__':
         
 
     if mode == Mode.conversion:
-    
+        
         # convert documents into vector representation and save to different file location                
-        duplication = duplicator.Duplicate(ros.docfile_flats, 10)    # 31 and 59
-        duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=None)
-        #duplication.convert(100, ros.dict_file, ros.vec_files_test,  ros.vec_files_test_labels,  100, labelSelection=None)
+        duplication = duplicator.Duplicate(ros.docfile_flats, 6)    # 31 and 6 -> 100
+        #duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=labelType.exclusive_strata)
+        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=labelType.exclusive_strata)
         
         # utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
         # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=1000, compute_accuracies=True)
+        parcel  = lstm.train(num_epochs=100, compute_accuracies=True)
         
         # save model if specified
         if save_model:
