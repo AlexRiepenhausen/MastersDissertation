@@ -22,10 +22,10 @@ class Display():
     
         index = self.getStartingPoint()
         
-        #for i in range(0,5000):
+        #for i in range(0,200):
             #self.data[i]['index'] = i 
-            #self.writeToFile()
-            #exit(0)
+        #self.writeToFile()
+        #exit(0)
         
         while index < self.numsamples:
             

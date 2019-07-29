@@ -164,7 +164,6 @@ class Duplicate():
         vector_dict, params = readVectorsDict(dict_file)
 
         selected = self.preSelectDocuments(num_files, starting_point, labelSelection)
-        print(selected)
         
         actual_file_num = len(selected) * self.duplicate_factor
         
@@ -225,7 +224,7 @@ class Duplicate():
                     
                     f.write(additional_info   + '\n')
                     f.write(str(char_count)   + '\n') 
-                    f.write(index             + '\n')
+                    f.write(str(index)        + '\n')
                     f.write(id                + '\n')                     
                     
                 file_index = file_index + 1 

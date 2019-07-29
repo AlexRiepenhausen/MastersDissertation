@@ -36,9 +36,12 @@ class LSTMTrainer:
                                                                        layer_dim,
                                                                        output_dim)                                                                       
 
+
+
     def initDevice(self):
         if torch.cuda.is_available():
             self.model.cuda()
+
 
 
     def initWeights(self, init, saved_model_path=None):
@@ -52,10 +55,13 @@ class LSTMTrainer:
             exit(0)
 
 
+
     def evaluateModel(self, test_samples=100, test=True):
 
-        correct = 0
-        total = 0
+        neg_correct = 0
+        neg_total   = 0
+        pos_correct = 0
+        pos_total   = 0
         
         labels_true = list()
         labels_pred = list()
@@ -63,9 +69,9 @@ class LSTMTrainer:
         loader = self.test_loader
         if test == False:
             loader = self.train_loader
-        
+
         for j, (vector_doc, label, colour_pair) in enumerate(loader):
-        
+
             if torch.cuda.is_available():
                 vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
                 label = Variable(label.cuda())
@@ -78,23 +84,47 @@ class LSTMTrainer:
 
             # Get predictions from the maximum value
             _, predicted = torch.max(outputs, 0)
-
-            # Total number of labels
-            total += 1
-
-            if torch.cuda.is_available():
-                if predicted.cpu() == label.squeeze(dim=0).cpu():
-                    correct += 1
-            else:
-                if predicted.cpu() == label.squeeze(dim=0).cpu():
-                    correct += 1
-
-            labels_true.append(label.squeeze(dim=0).cpu())
-            labels_pred.append(predicted.cpu())
+        
+            # compute accuracies for both positive and negative samples
+            numerical_label = label.squeeze(dim=0).cpu()
+            numerical_pred  = predicted.cpu()
+            
+            if numerical_label == 0:
+                neg_total += 1
+                
+            if numerical_label == 1:
+                pos_total += 1
+                                        
+            if self.predictedCorrectly(numerical_label, numerical_pred):
+                if numerical_label == 0:
+                    neg_correct += 1
+                if numerical_label == 1:
+                    pos_correct += 1
+                    
+            labels_true.append(numerical_label)
+            labels_pred.append(predicted.cpu())          
 
             if j == test_samples-1:
-                accuracy = float(correct) / float(total)
+                accuracy = dict()
+                accuracy['negative'] = float(neg_correct) / float(neg_total)
+                accuracy['positive'] = float(pos_correct) / float(pos_total)
                 return (labels_true, labels_pred), accuracy
+                
+                             
+                
+    def predictedCorrectly(self, predicted, label):
+    
+        if torch.cuda.is_available():
+            if predicted == label:
+                return True
+            else:
+                return False
+        else:
+            if predicted == label:
+                return True
+            else:
+                return False   
+
 
 
     def train(self, num_epochs, compute_accuracies, test_samples=100, init=weightInit.fromScratch, model_path=None):
@@ -153,6 +183,7 @@ class LSTMTrainer:
             parcel.append(accuracies)
 
         return parcel
+
 
 
     # check if it is necessary to run evaluation of accuracy

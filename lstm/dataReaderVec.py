@@ -15,6 +15,8 @@ class labelType(IntEnum):
     common_solum      = 5
     additional_info   = 6
     char_count        = 7  
+    index             = 8
+    identifier        = 9
 
 
 class VectorDataset(Dataset):
@@ -38,7 +40,8 @@ class VectorDataset(Dataset):
         self.negative_samples = 0    
         
         self.current_test_sample = 0 
-               
+        
+        self.previous_positive = dict()
 
 
     def __len__(self):
@@ -95,6 +98,9 @@ class VectorDataset(Dataset):
         classlabel = self.ownership(label)   
             
         self.current_test_sample += 1   
+        
+        if self.current_test_sample == self.num_files:
+            self.current_test_sample = 0
             
         return index, classlabel                
                             
@@ -118,23 +124,34 @@ class VectorDataset(Dataset):
         while self.labels[index][labelType.property_type] != 'flat':   
             index = self.drawRandomSample("ownership") 
                     
-        self.positive_samples += 1      
+        self.positive_samples += 1     
+        
+        self.previous_positive["file_index"] = index
             
         return index, "ownership"
         
               
         
     def drawNegativeSample(self):
+    
+        # 50% chance of drawing previous positve sample and looking at the negatives
+        previous_len = len(self.previous_positive["non_positive_samples"])
+        
+        if random.randint(0, 1) == 1 and previous_len > 0:
+        
+            self.negative_samples += 1
+            return self.previous_positive["file_index"], "previous"
+                
+        else:
          
-        index = self.drawRandomSample("no ownership") 
-        
-        while self.labels[index][labelType.property_type] != 'flat':   
-            index = self.drawRandomSample("no ownership")
+            index = self.drawRandomSample("no ownership") 
             
-        self.negative_samples += 1
-        
-        return index, "no ownership"
-                     
+            while self.labels[index][labelType.property_type] != 'flat':   
+                index = self.drawRandomSample("no ownership")
+                
+            self.negative_samples += 1
+            
+            return index, "no ownership"
     
   
     def drawRandomSample(self, classification_label):
@@ -210,15 +227,31 @@ class VectorDataset(Dataset):
  
  
     def getRequiredLabelIndex(self, classlabel, tags):
-    
+          
         if classlabel == "no ownership":
             classlabel_index = random.randint(0, len(tags)-1)
             return classlabel_index
             
         if classlabel == "ownership":
+            
+            ownership_indices = list()           
+            non_ownership_ind = list()
+            
             for i in range(0, len(tags)):
                 if tags[i][2] == classlabel:
-                    return i
+                    ownership_indices.append(i)
+                else:
+                    non_ownership_ind.append(i)
+                    
+            self.previous_positive["non_positive_samples"] = non_ownership_ind
+            
+            classlabel_index = random.randint(0, len(ownership_indices)-1)
+            
+            return ownership_indices[classlabel_index]        
+            
+        if classlabel == "previous":
+            classlabel_index = random.randint(0, len(self.previous_positive["non_positive_samples"])-1)                 
+            return self.previous_positive["non_positive_samples"][classlabel_index]     
                 
         # if classlabel does not exist, return 0 as default
         return 0    
@@ -303,7 +336,7 @@ class VectorDataset(Dataset):
         else:
             index, classlabel = self.testingSampleDraw()
         
-                                  
+                                      
         vectors, label = self.loadVectors(index, classlabel)
     
         #self.debug(index, classlabel, label)
