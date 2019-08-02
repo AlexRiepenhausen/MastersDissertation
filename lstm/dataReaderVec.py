@@ -41,7 +41,8 @@ class VectorDataset(Dataset):
         
         self.current_test_sample = 0 
         
-        self.previous_positive = dict()
+        self.ownershipflag = True
+
 
 
     def __len__(self):
@@ -83,6 +84,7 @@ class VectorDataset(Dataset):
         else: 
             return "ownership" 
      
+     
     
     def testingSampleDraw(self):
     
@@ -97,14 +99,14 @@ class VectorDataset(Dataset):
         tags               = self.assignOwnershipToTags(index, tags)  
         classlabel         = self.decideLabel(tags)
         requiredLabelIndex = self.getLabelIndexTest(tags, classlabel)
-        vectors            = self.removeIrrelevantColours(requiredLabelIndex, tags, vectors)
+        vectors            = self.truncateVectors(requiredLabelIndex, tags, vectors)
         
         self.current_test_sample += 1 
         
         if self.current_test_sample == self.num_files:
             self.current_test_sample = 0
         
-        return vectors, tags[requiredLabelIndex]     
+        return index, vectors, tags[requiredLabelIndex]     
         
      
     
@@ -167,15 +169,22 @@ class VectorDataset(Dataset):
       
                  
     def balancedSampleDraw(self):
-    
+        
         if self.positive_samples > self.negative_samples: 
-            index, classlabel = self.drawNegativeSample()      
-            return index, classlabel                                
-        else:    
-            index, classlabel = self.drawPositiveSample()  
-            return index, classlabel        
-          
+            self.ownershipflag = False    
+            
+        if self.negative_samples > self.positive_samples: 
+            self.ownershipflag = True      
     
+        if self.ownershipflag == True:
+            index, classlabel = self.drawPositiveSample()  
+            return index, classlabel 
+            
+        if self.ownershipflag == False:
+            index, classlabel = self.drawNegativeSample()      
+            return index, classlabel  
+            
+                                                          
     
     def drawPositiveSample(self): 
          
@@ -185,43 +194,30 @@ class VectorDataset(Dataset):
             index = self.drawRandomSample("ownership") 
                     
         self.positive_samples += 1     
-        
-        self.previous_positive["file_index"] = index
             
         return index, "ownership"
         
               
         
     def drawNegativeSample(self):
-    
-        # 50% chance of drawing previous positve sample and looking at the negatives
-        previous_len = len(self.previous_positive["non_positive_samples"])
         
-        if previous_len > 0:
-        
-            self.negative_samples += 1
-            return self.previous_positive["file_index"], "no ownership"
-                
-        else:
-        
-            while True:
-         
-                non_ownership_ind = list()
-                
-                # get the raw vectors and the colour pair positions within the parcel
-                index             = self.drawRandomSample("ownership")
-                vectors, parcel   = self.getVectors(index)                  
-                tags              = self.getCurrentTags(parcel)                   
-                tags              = self.assignOwnershipToTags(index, tags)
-                            
-                for i in range(0, len(tags)):
-                    if tags[i][2] == "no ownership":
-                        non_ownership_ind.append(i)
+        while True:
+     
+            non_ownership_ind = list()
+            
+            # get the raw vectors and the colour pair positions within the parcel
+            index             = self.drawRandomSample("ownership")
+            vectors, parcel   = self.getVectors(index)                  
+            tags              = self.getCurrentTags(parcel)                   
+            tags              = self.assignOwnershipToTags(index, tags)
                         
-                if len(non_ownership_ind) > 0:
-                    self.previous_positive["non_positive_samples"] = non_ownership_ind
-                    self.negative_samples += 1
-                    return index, "no ownership"
+            for i in range(0, len(tags)):
+                if tags[i][2] == "no ownership":
+                    non_ownership_ind.append(i)
+                    
+            if len(non_ownership_ind) > 0:
+                self.negative_samples += 1
+                return index, "no ownership"
     
     
   
@@ -254,7 +250,7 @@ class VectorDataset(Dataset):
         requiredLabelIndex = self.getRequiredLabelIndex(classlabel, tags)
                           
         # remove irrelevant colours from vectors          
-        vectors = self.removeIrrelevantColours(requiredLabelIndex, tags, vectors)
+        vectors = self.truncateVectors(requiredLabelIndex, tags, vectors)
         
         return vectors, tags[requiredLabelIndex]
         
@@ -298,33 +294,17 @@ class VectorDataset(Dataset):
    
  
     def getRequiredLabelIndex(self, classlabel, tags):
+            
+        ownership_indices = list()           
+        
+        for i in range(0, len(tags)):
+            if tags[i][2] == classlabel:
+                ownership_indices.append(i)
+        
+        classlabel_index = random.randint(0, len(ownership_indices)-1)
+        
+        return ownership_indices[classlabel_index]        
 
-        if classlabel == "ownership":
-            
-            ownership_indices = list()           
-            non_ownership_ind = list()
-            
-            for i in range(0, len(tags)):
-                if tags[i][2] == classlabel:
-                    ownership_indices.append(i)
-                else:
-                    non_ownership_ind.append(i)
-                    
-            self.previous_positive["non_positive_samples"] = non_ownership_ind
-            
-            classlabel_index = 0
-            
-            classlabel_index = random.randint(0, len(ownership_indices)-1)
-            
-            return ownership_indices[classlabel_index]        
-            
-        if classlabel == "no ownership":
-            classlabel_index = random.randint(0, len(self.previous_positive["non_positive_samples"])-1)                 
-            return self.previous_positive["non_positive_samples"][classlabel_index]     
-                
-        # if classlabel does not exist, return 0 as default
-        return 0    
- 
  
  
     def getCurrentTags(self, parcel):
@@ -364,17 +344,17 @@ class VectorDataset(Dataset):
             
     
     
-    def removeIrrelevantColours(self, requiredLabelIndex, tags, vectors):
-    
+    def truncateVectors(self, requiredLabelIndex, tags, vectors):
+        
+        cut_off_point = 0
+        
         for tag in tags:
-            if tag[0] != tags[requiredLabelIndex][0]:
-                positions = tag[1]
-                for position in positions:
-                    vectors[position] = [] 
-        
-        vectors = [x for x in vectors if x != []] 
-        
-        return vectors       
+            if tag[0] == tags[requiredLabelIndex][0]:
+                positions     = tag[1]
+                cut_off_point = positions[1] + 1
+                break
+                
+        return vectors[0:cut_off_point]       
        
                 
         
@@ -393,7 +373,7 @@ class VectorDataset(Dataset):
         print("{} is {}".format(label[0], self.labelConversion(label[2])))
         print("------------------------------------------------")
                        
-                
+                 
                 
     def __getitem__(self, idx):
     
@@ -404,11 +384,15 @@ class VectorDataset(Dataset):
             index, classlabel = self.balancedSampleDraw()  
             vectors, label    = self.loadVectors(index, classlabel)
             colour_pair       = label[0]
-            numeric_lbl       = self.labelConversion(label[2])  
-            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
+            numeric_lbl       = self.labelConversion(label[2]) 
+            doc_id            = self.labels[index][8] 
+            doc_index         = self.labels[index][9]   
+            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair, doc_id, doc_index 
         else:
-            vectors, label    = self.testingSampleDraw()    
-            colour_pair       = label[0]
-            numeric_lbl       = self.labelConversion(label[2])                         
-            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair  
+            index, vectors, label = self.testingSampleDraw()    
+            colour_pair    = label[0]
+            numeric_lbl    = self.labelConversion(label[2])      
+            doc_id         = self.labels[index][8] 
+            doc_index      = self.labels[index][9]                   
+            return torch.tensor(np.asarray(vectors)).float(), torch.tensor(numeric_lbl).long(), colour_pair, doc_id, doc_index  
 

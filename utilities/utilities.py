@@ -277,7 +277,7 @@ def getReverseDictKey(vector):
 
 # read the words to be replaced in the primary vector file
 def readKeyTable(replacement_table_file_path):
-    table = []
+    table = list()
     for line in open(replacement_table_file_path, encoding="utf8"):
         table.append(line.replace("\n",""))
     return table

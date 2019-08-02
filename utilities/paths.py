@@ -64,10 +64,6 @@ class RosDataPaths():
         #keywords
         self.keyword_path = './data/w2v/training/dictionary/keywords.txt'
         
-        # similarity
-        self.sim_csv_dir = './data/w2v/similarity/csv/'
-        self.sim_img_dir = './data/w2v/similarity/img/'
-        
         
 
 

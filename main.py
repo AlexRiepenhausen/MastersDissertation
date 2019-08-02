@@ -36,12 +36,14 @@ if __name__ == '__main__':
     
     # train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
     # test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
+    # exit(0)
     
     if mode == Mode.display:
         display = display.Display(ros.docpath, ros.docfile_flats, 200, houses=False)
         display.run()
         #display.displayAnnotationInfo()
         exit(0)
+    
     
     
     if mode == Mode.word2vec:
@@ -66,33 +68,35 @@ if __name__ == '__main__':
         if save_model:
             path = ros.w2v_model_param + w2v.toString() + '_date_' + utilities.timeStampedFileName()
             torch.save(w2v.skip_gram_model.state_dict(), path)
+      
         
 
     if mode == Mode.conversion:
         
         # convert documents into vector representation and save to different file location                
         duplication = duplicator.Duplicate(ros.docfile_flats, 6)    # 31 and 6 -> 100
-        #duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=labelType.exclusive_strata)
-        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=labelType.exclusive_strata)
+        #duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=labelType.exclusive_solum)
+        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=labelType.exclusive_solum)
         
         # utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
         # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
         exit(0)
 
 
-    if mode == Mode.lstm:
 
+    if mode == Mode.lstm:
+        
         # lstm training parameters
         lstm = LSTMTrainer(ros.vec_files_train,
                            ros.vec_files_train_labels,
                            ros.vec_files_test,
                            ros.vec_files_test_labels,
-                           learning_rate=0.001,
+                           learning_rate=0.003,
                            iterations_per_epoch=100,
                            input_dim=75,
-                           category=labelType.exclusive_strata,
-                           hidden_dim=50,
-                           layer_dim=1,
+                           category=labelType.exclusive_solum,
+                           hidden_dim=30,
+                           layer_dim=2,
                            output_dim=2)
         
         # model = ros.lstm_model_param + "lr_0.001_ipe_100_in_75_ct_2_hd_50_ly_1_out_2_date_2019_07_26_21_01_52"        
@@ -105,7 +109,7 @@ if __name__ == '__main__':
         if save_model:
             path = ros.lstm_model_param + lstm.to_string + '_date_' + utilities.timeStampedFileName()
             torch.save(lstm.model.state_dict(), path)
-        
+            
         # write results to csv
         utilities.resultsToCSV(parcel, lstm.to_string, ros.lstm_csv_lss_dir, ros.lstm_csv_acc_dir)
         
@@ -113,23 +117,25 @@ if __name__ == '__main__':
         if confusion:
             
             # test set
-            labels, accuracy = lstm.evaluateModel(test_samples=100, test=True)
-            print("Accuracy Test Set: Negative {}, Positive {}".format(accuracy['negative'], accuracy['positive']))
+            labels, accuracy = lstm.evaluateModel(test_samples=100, test=True, matrix=True)
+            print("Test Set: Sensitivity {}, Specificity {}".format(accuracy['positive'], accuracy['negative']))
             class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
             
             # training set
-            labels, accuracy = lstm.evaluateModel(test_samples=100, test=False)
-            print("Accuracy Training Set: Negative {}, Positive {}".format(accuracy['negative'], accuracy['positive']))
+            labels, accuracy = lstm.evaluateModel(test_samples=100, test=False, matrix=True)
+            print("Training Set: Sensitivity {}, Specificity {}".format(accuracy['positive'], accuracy['negative']))
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
             
             
+            
     if mode == Mode.similarity:
         path = ros.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
-        measure_similarity = CosineSimilarity(p.imdb_files_neg_train, ros.dict_file)
+        measure_similarity = CosineSimilarity(ros.dict_file, ros.keyword_path)
         measure_similarity.angularDistancesToFile(path)
+           
             
             
     if mode == Mode.plot:
@@ -141,6 +147,7 @@ if __name__ == '__main__':
         plotgraphs.convertCsvToGraphs(ros.w2v_csv_lss_dir,  ros.w2v_graph_lss_dir,  w2v_lss_y_range,  'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(ros.lstm_csv_lss_dir, ros.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')   
         plotgraphs.mergeAllGraphs(ros.lstm_csv_acc_dir, ros.lstm_merged_dir, lstm_acc_y_range, 'Accuracy in percent')
+        
         
         
     end = time.time()

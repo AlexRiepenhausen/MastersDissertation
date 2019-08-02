@@ -15,6 +15,7 @@ class Duplicate():
     
         self.filename         = filename
         self.data             = self.readFromFile()   
+        self.randomseed       = 0
          
         self.duplicate_factor = duplicate_factor
         self.stylekeys        = self.getKeywords(1, 11)
@@ -22,10 +23,12 @@ class Duplicate():
         self.shuffled_colours = self.getDuplicationConfig(self.colourkeys)
         self.shuffled_styles  = self.getDuplicationConfig(self.stylekeys)
      
+     
     
     def readFromFile(self):
         with open(self.filename) as f:  
             return ndjson.load(f)  
+            
             
             
     def getKeywords(self, start, end):
@@ -43,19 +46,21 @@ class Duplicate():
         return keywords
         
         
+        
     def getDuplicationConfig(self, dictionary):
     
         container    = dict()
         new_dict     = dictionary
         container[0] = {v: k for k, v in dictionary.items()}
     
-        for i in range(1, self.duplicate_factor):
+        for i in range(1, self.duplicate_factor*10):
             new_dict = self.shuffleDictionary(new_dict)
             container[i] = new_dict
             new_dict = {v: k for k, v in new_dict.items()} # invert
             
         return container
         
+      
         
     def shuffleDictionary(self, old_dict):
     
@@ -80,15 +85,18 @@ class Duplicate():
                     
         return new_dict  
         
+        
     
-    def returnEquivalentColour(self, dict_index, word):
+    def returnEquivalentColour(self, word):
         wid = self.colourkeys[word] 
-        return self.shuffled_colours[dict_index][wid]
+        return self.shuffled_colours[self.randomseed][wid]
         
         
-    def returnEquivalentStyle(self, dict_index, word):
+        
+    def returnEquivalentStyle(self, word):
         wid = self.stylekeys[word] 
-        return self.shuffled_styles[dict_index][wid]
+        return self.shuffled_styles[self.randomseed][wid]
+        
         
     
     def preSelectDocuments(self, num_files, starting_point, labelSelection=None):
@@ -125,7 +133,8 @@ class Duplicate():
         return selected
         
         
-    def returnEquivalentLabels(self, dict_index, labelcontainer):
+        
+    def returnEquivalentLabels(self, labelcontainer):
     
         lbl_arr = list()
         new_str = ''
@@ -143,10 +152,10 @@ class Duplicate():
             for sub in label:
             
                 if sub in self.colourkeys:                                                                                                          
-                    sub = self.returnEquivalentColour(dict_index,sub)
+                    sub = self.returnEquivalentColour(sub)
                 
                 if sub in self.stylekeys:
-                    sub = self.returnEquivalentStyle(dict_index, sub)                
+                    sub = self.returnEquivalentStyle(sub)                
                                 
                 new_str = new_str + sub + ' '
                 
@@ -156,6 +165,7 @@ class Duplicate():
         new_str = new_str[:-2]
         
         return new_str
+        
         
         
     def convert(self, num_files, dict_file, filepath, labelpath, starting_point, labelSelection=None):
@@ -187,8 +197,10 @@ class Duplicate():
         file_index = 0
         
         for i in range(0, self.duplicate_factor): # duplication factor
-        
-            for j in selected:                    # number of original training files            
+            
+            for j in selected:                    # number of original training files 
+            
+                self.randomseed = random.randint(1,(self.duplicate_factor*10)-1)            
                 
                 text  = getTextNdJson(self.data, j)
                 
@@ -199,10 +211,10 @@ class Duplicate():
                         if word in vector_dict:   # check if word exists in your dictionary
                             
                             if word in self.colourkeys:                                                                                                          
-                                word = self.returnEquivalentColour(i,word)
+                                word = self.returnEquivalentColour(word)
                             
                             if word in self.stylekeys:
-                                word = self.returnEquivalentStyle(i, word)
+                                word = self.returnEquivalentStyle(word)
                             
                             f.write(str(vector_dict[word]).replace("'", "").replace(", ", " ").replace("[", "").replace("]", "")+'\n')                               
                                 
@@ -216,11 +228,11 @@ class Duplicate():
                 
                     property_type     = self.data[j]['property_type'] 
                     
-                    tenement_steading = self.returnEquivalentLabels(i, self.data[j]['tenement_steading'])    
-                    exclusive_strata  = self.returnEquivalentLabels(i, self.data[j]['exclusive_strata'])                  
-                    exclusive_solum   = self.returnEquivalentLabels(i, self.data[j]['exclusive_solum'])  
-                    common_strata     = self.returnEquivalentLabels(i, self.data[j]['common_strata'])  
-                    common_solum      = self.returnEquivalentLabels(i, self.data[j]['common_solum'])                                         
+                    tenement_steading = self.returnEquivalentLabels(self.data[j]['tenement_steading'])    
+                    exclusive_strata  = self.returnEquivalentLabels(self.data[j]['exclusive_strata'])                  
+                    exclusive_solum   = self.returnEquivalentLabels(self.data[j]['exclusive_solum'])  
+                    common_strata     = self.returnEquivalentLabels(self.data[j]['common_strata'])  
+                    common_solum      = self.returnEquivalentLabels(self.data[j]['common_solum'])                                         
                     
                     additional_info   = self.data[j]['additional_info'] 
                     char_count        = self.data[j]['char_count'] 

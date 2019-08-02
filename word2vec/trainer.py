@@ -30,6 +30,7 @@ class Word2VecTrainer:
         self.device          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+
     # return string containing information about this training session
     def toString(self):
         return "lr_{}_bs_{}_ipe_{}_embs_{}_embd_{}_win_{}".format(self.initial_lr,

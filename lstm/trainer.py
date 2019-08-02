@@ -56,12 +56,14 @@ class LSTMTrainer:
 
 
 
-    def evaluateModel(self, test_samples=100, test=True):
+    def evaluateModel(self, test_samples=100, test=True, matrix=False):
 
         neg_correct = 0
         neg_total   = 0
         pos_correct = 0
         pos_total   = 0
+        
+        predicted_wrongly = list()
         
         labels_true = list()
         labels_pred = list()
@@ -70,7 +72,7 @@ class LSTMTrainer:
         if test == False:
             loader = self.train_loader
 
-        for j, (vector_doc, label, colour_pair) in enumerate(loader):
+        for j, (vector_doc, label, colour_pair, doc_id, doc_index) in enumerate(loader):
 
             if torch.cuda.is_available():
                 vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
@@ -100,6 +102,15 @@ class LSTMTrainer:
                     neg_correct += 1
                 if numerical_label == 1:
                     pos_correct += 1
+            else:
+                if matrix:
+                    item = dict()
+                    item['TrueLabel'] = label.squeeze(dim=0).cpu()
+                    item['Predicted'] = numerical_pred
+                    item['ColPair']   = colour_pair
+                    item['DocID']     = doc_id
+                    item['Index']     = doc_index
+                    predicted_wrongly.append(item)   
                     
             labels_true.append(numerical_label)
             labels_pred.append(predicted.cpu())     
@@ -108,8 +119,19 @@ class LSTMTrainer:
                 accuracy = dict()
                 accuracy['negative'] = float(neg_correct) / float(neg_total)
                 accuracy['positive'] = float(pos_correct) / float(pos_total)
+                if matrix:
+                    for item in predicted_wrongly:
+                        print(predicted_wrongly)
                 return (labels_true, labels_pred), accuracy
-                
+    
+    
+    
+    def printItemsPredictedWrongly(self, predicted_wrongly):
+        
+        print("\n|---------------------------------------- Items predicted wrongly ----------------------------------------|")
+        for item in predicted_wrongly:
+            print(item) 
+        print("\n")         
                              
                 
     def predictedCorrectly(self, predicted, label):
@@ -140,7 +162,7 @@ class LSTMTrainer:
 
             avg_loss = 0.0
 
-            for i, (vector_doc, label, colour_pair) in enumerate(self.train_loader):
+            for i, (vector_doc, label, colour_pair, doc_id, doc_index) in enumerate(self.train_loader):
                 
                 if torch.cuda.is_available():
                     vector_doc = Variable(vector_doc.view(-1, len(vector_doc), self.input_dim).cuda())
@@ -164,12 +186,12 @@ class LSTMTrainer:
                     loss.cuda()
                 # Getting gradients w.r.t. parameters
                 loss.backward()
-      
+                
                 # Updating parameters
                 self.optimiser.step()
-
+                
                 avg_loss += loss.item()
-
+                
                 # save losses and accuracies every self.iterations_per_epoch
                 if self.runEvaluation(i):
                     losses.append(avg_loss/self.iterations_per_epoch)
@@ -177,7 +199,7 @@ class LSTMTrainer:
                         _, accuracy = self.evaluateModel(test_samples, test=True)
                         accuracies.append(accuracy)
                     break
-
+                
         parcel.append(losses)
         if compute_accuracies == True:
             parcel.append(accuracies)
