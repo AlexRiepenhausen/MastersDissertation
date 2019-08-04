@@ -247,7 +247,7 @@ class VectorDataset(Dataset):
         tags = self.assignOwnershipToTags(index, tags)
         
         # get index denoting required ownership type specified by classlabel
-        requiredLabelIndex = self.getRequiredLabelIndex(classlabel, tags)
+        requiredLabelIndex = self.getRequiredLabelIndex(index, classlabel, tags)
                           
         # remove irrelevant colours from vectors          
         vectors = self.truncateVectors(requiredLabelIndex, tags, vectors)
@@ -293,14 +293,14 @@ class VectorDataset(Dataset):
  
    
  
-    def getRequiredLabelIndex(self, classlabel, tags):
+    def getRequiredLabelIndex(self, index, classlabel, tags):
             
         ownership_indices = list()           
         
         for i in range(0, len(tags)):
             if tags[i][2] == classlabel:
                 ownership_indices.append(i)
-        
+            
         classlabel_index = random.randint(0, len(ownership_indices)-1)
         
         return ownership_indices[classlabel_index]        

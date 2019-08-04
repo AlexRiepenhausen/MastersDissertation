@@ -121,7 +121,7 @@ class LSTMTrainer:
                 accuracy['positive'] = float(pos_correct) / float(pos_total)
                 if matrix:
                     for item in predicted_wrongly:
-                        print(predicted_wrongly)
+                        print(item)
                 return (labels_true, labels_pred), accuracy
     
     

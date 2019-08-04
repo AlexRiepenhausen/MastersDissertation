@@ -27,7 +27,7 @@ if __name__ == '__main__':
     loading = start
     
     # init paths
-    ros = paths.RosDataPaths(1000, 100) # num_train, num_test
+    ros = paths.RosDataPaths(1000, 100) # num_train, num_test 34, 29
     
     # set mode of operation
     mode       = Mode.lstm
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     if mode == Mode.conversion:
         
         # convert documents into vector representation and save to different file location                
-        duplication = duplicator.Duplicate(ros.docfile_flats, 6)    # 31 and 6 -> 100
-        #duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=labelType.exclusive_solum)
-        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=labelType.exclusive_solum)
+        duplication = duplicator.Duplicate(ros.docfile_flats, 50)    # 31 and 6 -> 100
+        #duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,  0, labelSelection=labelType.common_strata)
+        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=labelType.common_strata)
         
         # utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
         # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
@@ -91,19 +91,19 @@ if __name__ == '__main__':
                            ros.vec_files_train_labels,
                            ros.vec_files_test,
                            ros.vec_files_test_labels,
-                           learning_rate=0.003,
-                           iterations_per_epoch=100,
+                           learning_rate=0.001,
+                           iterations_per_epoch=50,
                            input_dim=75,
-                           category=labelType.exclusive_solum,
+                           category=labelType.common_strata,
                            hidden_dim=30,
-                           layer_dim=2,
+                           layer_dim=3,
                            output_dim=2)
         
         # model = ros.lstm_model_param + "lr_0.001_ipe_100_in_75_ct_2_hd_50_ly_1_out_2_date_2019_07_26_21_01_52"        
         
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=100, compute_accuracies=True)
+        parcel  = lstm.train(num_epochs=30, compute_accuracies=True)
         
         # save model if specified
         if save_model:
@@ -112,6 +112,8 @@ if __name__ == '__main__':
             
         # write results to csv
         utilities.resultsToCSV(parcel, lstm.to_string, ros.lstm_csv_lss_dir, ros.lstm_csv_acc_dir)
+        
+        print(lstm.to_string)
         
         # write confusion matrix as image to output
         if confusion:

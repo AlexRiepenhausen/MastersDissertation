@@ -125,6 +125,7 @@ class Duplicate():
             if self.data[i]['property_type'] == 'flat':
                 if self.data[i][ownership_type] != 'verbal':
                     if self.data[i][ownership_type] != 'none':
+                        
                         selected.append(i) 
             
         print("Total of {} documents selected out of {}, which is {} %".format(len(selected), num_files, float(len(selected)*100/num_files)))
