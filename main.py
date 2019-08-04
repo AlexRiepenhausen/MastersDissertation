@@ -30,7 +30,7 @@ if __name__ == '__main__':
     ros = paths.RosDataPaths(1000, 100) # num_train, num_test 34, 29
     
     # set mode of operation
-    mode       = Mode.lstm
+    mode       = Mode.plot
     save_model = True
     confusion  = True
     
