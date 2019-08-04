@@ -21,6 +21,8 @@ class labelType(IntEnum):
     common_solum      = 5
     additional_info   = 6
     char_count        = 7              
+    index             = 8
+    identifier        = 9            
 
 
 class Mode(IntEnum):
@@ -43,6 +45,7 @@ class Vec(IntEnum):
     skipVec = 1
 
 
+
 # cleans a line of text from punctuation and other special characters before processing
 def parseLine(line):
     line = line.lower()
@@ -52,6 +55,7 @@ def parseLine(line):
     return line
 
 
+
 # returns a list of file paths from the same directory to avoid manual initialisation
 def generateFilePaths(path, number_of_docs, extension):
     paths = list()
@@ -59,6 +63,7 @@ def generateFilePaths(path, number_of_docs, extension):
         paths.append(path + '{0:05d}'.format(i) + extension)
     return paths
     
+
 
 def getTextNdJson(data, index):
 
@@ -72,6 +77,7 @@ def getTextNdJson(data, index):
             result.append(item)
             
     return result  
+
 
 
 def ndjsonVectorisation(data, vec_files, labels, dict_file, unknown_vec):
@@ -111,6 +117,7 @@ def ndjsonVectorisation(data, vec_files, labels, dict_file, unknown_vec):
                                                                                               percent_unknown_words))            
 
 
+
 # convert documents into vector representations and write them to files
 def documentVectorisation(doc_files, vec_files, dict_file, unknown_vec, debug=False):
 
@@ -124,6 +131,7 @@ def documentVectorisation(doc_files, vec_files, dict_file, unknown_vec, debug=Fa
         for vector_doc in dataReader:
             printVecToWords(reverse_dict, vector_doc)
             exit(0)
+
 
 
 # reconverts vectors to words for debugging/checking purposes
@@ -141,11 +149,13 @@ def printVecToWords(reverse_dict,vectors):
             print(key)
 
 
+
 # returns the maximum number of words observed in a single document
 def getMaxDocumentLength(dict_file):
     with open(dict_file,'r') as f:
         header = f.readline()
         return int(header.split()[2])
+
 
 
 # saves accuracy measures obtained during training to csv file
@@ -155,6 +165,7 @@ def writeDataToCSV(data, filename):
         accuracy_writer = csv.writer(csv_file, delimiter=',')
         for i in range(0, len(data)):
             accuracy_writer.writerow([x_axis[i],data[i]])
+
 
 
 # reads accuracy value from csv; needed for plotting a graph with matplotlib
@@ -170,6 +181,7 @@ def readAccuraciesFromCSV(filename):
     return x_axis, y_axis
 
 
+
 # generates time stamp
 def timeStampedFileName():
     fmt = '%Y_%m_%d_%H_%M_%S'
@@ -177,9 +189,11 @@ def timeStampedFileName():
     return datetime.datetime.now().strftime(fmt)
 
 
+
 # returns names of all files in given directory
 def getFilesInDirectory(directory):
     return os.listdir(directory)
+
 
 
 # write lstm or word2vec accuracies and losses to csv
@@ -196,9 +210,22 @@ def resultsToCSV(parcel, lstm_info, csv_losses_dir, csv_accuracies_dir=None):
         if len(parcel) == 1:
             return
 
-        accuracies   = parcel[1]
-        acc_csv_file = csv_accuracies_dir + 'acc_' + lstm_info + '_date_' + timestamp + '.csv'
-        writeDataToCSV(accuracies, acc_csv_file)
+        accuracies       = parcel[1]
+ 
+        acc_csv_file_neg = csv_accuracies_dir + 'acc_neg' + lstm_info + '_date_' + timestamp + '.csv'        
+        acc_csv_file_pos = csv_accuracies_dir + 'acc_pos' + lstm_info + '_date_' + timestamp + '.csv'
+        
+        #get positive accuracies
+        acc_neg = list()
+        acc_pos = list()
+        
+        for item in accuracies:
+            acc_neg.append(item["negative"])
+            acc_pos.append(item["positive"])
+        
+        writeDataToCSV(acc_neg, acc_csv_file_neg)
+        writeDataToCSV(acc_pos, acc_csv_file_pos)
+
 
 
 # read file containing mapping of words to (pretrained) vectors
@@ -230,6 +257,7 @@ def readVectorsDict(dict_file_path, reverse=False):
     return vector_dict, (num_vectors, vector_size, num_vec_req)
 
 
+
 # returns the vector in form of a parsed string, which is then used as the reverse ditionary key
 def getReverseDictKey(vector):
 
@@ -243,12 +271,14 @@ def getReverseDictKey(vector):
     return key
 
 
+
 # read the words to be replaced in the primary vector file
 def readKeyTable(replacement_table_file_path):
     table = []
     for line in open(replacement_table_file_path, encoding="utf8"):
         table.append(line.replace("\n",""))
     return table
+
 
 
 # read the first x files in a directory
@@ -267,6 +297,7 @@ def readSpecifiedNumberOfFiles(numFiles,path):
     return labels[0:numFiles], files[0:numFiles]
 
 
+
 def getLabelsFromFiles(files, extension):
 
     labels = list()
@@ -279,6 +310,7 @@ def getLabelsFromFiles(files, extension):
     return labels
 
 
+
 def copyFileNamesToDifferentPath(path, filenames, extension):
 
     new_file_names = list()
@@ -288,6 +320,7 @@ def copyFileNamesToDifferentPath(path, filenames, extension):
         new_file_names.append(file_name)
         
     return new_file_names
+
 
 
 # save labels of every document so that they are readily accessible

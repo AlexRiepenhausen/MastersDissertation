@@ -155,6 +155,8 @@ class Duplicate():
         common_solum        = 5
         additional_info     = 6
         char_count          = 7 
+        index               = 8
+        id                  = 9
         ''' 
     
         num_unknown_words   = 0
@@ -162,7 +164,6 @@ class Duplicate():
         vector_dict, params = readVectorsDict(dict_file)
 
         selected = self.preSelectDocuments(num_files, starting_point, labelSelection)
-        print(selected)
         
         actual_file_num = len(selected) * self.duplicate_factor
         
@@ -197,8 +198,7 @@ class Duplicate():
                         total_num_words += 1                
                 
                 with open(labels[file_index], 'w') as f: 
-                
-                
+                          
                     property_type     = self.data[j]['property_type'] 
                     
                     tenement_steading = self.returnEquivalentLabels(i, self.data[j]['tenement_steading'])    
@@ -209,8 +209,9 @@ class Duplicate():
                     
                     additional_info   = self.data[j]['additional_info'] 
                     char_count        = self.data[j]['char_count'] 
+                    index             = self.data[j]['index'] 
+                    id                = self.data[j]['id'] 
     
-                    
                     f.write(property_type     + '\n')  
                            
                     f.write(tenement_steading + '\n') 
@@ -221,6 +222,8 @@ class Duplicate():
                     
                     f.write(additional_info   + '\n')
                     f.write(str(char_count)   + '\n') 
+                    f.write(str(index)        + '\n')
+                    f.write(id                + '\n')                      
                     
                     
                 file_index = file_index + 1 

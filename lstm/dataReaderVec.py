@@ -1,28 +1,47 @@
 import torch
 import numpy as np
 import random
+from enum import IntEnum
 from torch.utils.data import Dataset
 from collections import defaultdict, OrderedDict
 
+class labelType(IntEnum):
+    property_type     = 0
+    tenement_steading = 1 
+    exclusive_strata  = 2                       
+    exclusive_solum   = 3
+    common_strata     = 4
+    common_solum      = 5
+    additional_info   = 6
+    char_count        = 7  
+    index             = 8
+    identifier        = 9
+
 class VectorDataset(Dataset):
 
-    def __init__(self, file_paths, labels, seq_dim, batch_size=1):
+    def __init__(self, file_paths, label_path, category, loadertype="train"):
     
+        self.category   = category 
+        self.loadertype = loadertype    
+  
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
-        self.batch_size = batch_size
         
         self.keywords   = self.getKeywords()
-        self.labels     = self.getLabelsFromFiles(labels)    
+        self.labels     = self.getLabelsFromFiles(label_path)    
         self.files      = self.readFiles()    
 
         # print label distribution
         self.lbl_hist   = self.labelHistogram()
+        
+        self.positive_samples = 0
+        self.negative_samples = 0    
 
 
     def __len__(self):
-        return self.num_files/self.batch_size
+        return self.num_files
         
+  
   
     def getKeywords(self):
         path = './data/w2v/training/dictionary/labels.txt'
@@ -32,6 +51,7 @@ class VectorDataset(Dataset):
             keywords[line.replace('\n','')] = label #0,1,2,3 ...
             label += 1
         return keywords
+        
         
         
     def getLabelsFromFiles(self, files):
@@ -44,6 +64,7 @@ class VectorDataset(Dataset):
             labels.append(lines)
     
         return labels
+        
         
         
     def readFiles(self):
@@ -66,14 +87,6 @@ class VectorDataset(Dataset):
             
         return allfiles   
         
-    
-    def printLabelDictionary(self, lbl_hist):
-    
-        print("| ---- Label Dictionary ----  |")
-        print("|                             |")
-        for item in lbl_hist:
-            print("| Label: {:2d}, Description: {} ".format(item, self.labels[item]))
-        print("|                             |")      
 
 
     def labelHistogram(self):
@@ -84,37 +97,73 @@ class VectorDataset(Dataset):
 
         lbl_hist = OrderedDict(sorted(lbl_hist.items()))
         
-        print("| ---- Label Frequency ----  |")
-        print("|                            |")
-        for item in lbl_hist:
-                print("| Label: {:2d}, Frequency: {:4d} |".format(item, lbl_hist[item]))
-        print("|                            |")
-        
-        self.printLabelDictionary(lbl_hist) 
-        
         return lbl_hist    
+     
+             
+        
+    def drawBalancedSample(self):
+            
+        if self.positive_samples > self.negative_samples:
+            return self.drawNegativeSample()  
+        else:
+            return self.drawPositiveSample()      
+    
+    
+    
+    def drawNegativeSample(self):
+    
+        index, label_str = self.drawRandomSample()
+
+        while self.labelStringToClass(label_str) != 0:
+            index, label_str = self.drawRandomSample()
+        
+        self.negative_samples += 1
+        
+        return index, 0
         
         
-    def drawSample(self):
+        
+    def drawPositiveSample(self):
     
-        threshold  = random.uniform(0, 0.35)
+        index, label_str = self.drawRandomSample()
+
+        while self.labelStringToClass(label_str) != 1:
+            index, label_str = self.drawRandomSample()
+        
+        self.positive_samples += 1
+        
+        return index, 1   
+        
+        
+        
+    def drawRandomSample(self):
+        index      = random.randint(0, self.num_files-1) 
+        label_str  = self.labels[index][self.category]        
+        return index, label_str    
+        
+        
+        
+    def labelStringToClass(self, label_str):
     
-        while True:
-            index      = random.randint(0, self.num_files-1)
-            label_str  = self.labels[index][2]
-            label      = self.keywords[label_str]
+        if label_str == 'none':
+            return 0  
+        elif label_str == 'verbal':
+            return 0
+        else:
+            return 1
             
-            draw_prob  = 1.0 - float(self.lbl_hist[label]/self.num_files)
             
-            if draw_prob > threshold:
-                return index
+    def labelClassToString(self, num_label):
+
+        if num_label == 0:
+            return "verbal_or_none"
+        else:
+            return "colour_pair"
+            
                 
-
-
-    def __getitem__(self, idx):
     
-        index      = self.drawSample()
-        
+    def getVectors(self, index):
+    
         vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
     
         vectors = list()
@@ -125,21 +174,18 @@ class VectorDataset(Dataset):
             vectors.append(arr)
             line = vectorfile.readline()  
             
-        label_str  = self.labels[index][2]
+        return vectors
+                
+
+
+    def __getitem__(self, idx):
+    
+        index, label = self.drawBalancedSample()
+        vectors      = self.getVectors(index)
+        str_label    = self.labelClassToString(label)      
+        doc_id       = self.labels[index][8] 
+        doc_index    = self.labels[index][9]    
         
-        '''
-        index      = self.drawSample()
-        vectorfile = self.files[index]
-        label_str  = self.labels[index][2]
-        label      = self.keywords[label_str]
-        '''
-        
-        label = 0
-        if label_str == 'verbal':
-            print('verbal')
-            label = 1
-        else:
-            print('non-verbal')
-        
-        return torch.tensor([np.asarray(vectors)]).float(), torch.tensor(label).long()
+        return torch.tensor(np.asarray(vectors)).float(), torch.tensor(label).long(), str_label, doc_id, doc_index
+
 
