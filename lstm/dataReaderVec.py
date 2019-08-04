@@ -36,6 +36,8 @@ class VectorDataset(Dataset):
         
         self.positive_samples = 0
         self.negative_samples = 0    
+        self.current_sample   = 0
+
 
 
     def __len__(self):
@@ -99,6 +101,21 @@ class VectorDataset(Dataset):
         
         return lbl_hist    
      
+     
+     
+    def drawTrainingSample(self):
+    
+        index     = self.current_sample
+        label_str = self.labels[index][self.category]   
+        label     = self.labelStringToClass(label_str)
+    
+        self.current_sample += 1 
+        
+        if self.current_sample == self.num_files:
+            self.current_sample = 0
+            
+        return index, label
+      
              
         
     def drawBalancedSample(self):
@@ -180,11 +197,21 @@ class VectorDataset(Dataset):
 
     def __getitem__(self, idx):
     
-        index, label = self.drawBalancedSample()
-        vectors      = self.getVectors(index)
-        str_label    = self.labelClassToString(label)      
-        doc_id       = self.labels[index][8] 
-        doc_index    = self.labels[index][9]    
+        if self.loadertype == "train":
+    
+            index, label = self.drawBalancedSample()
+            vectors      = self.getVectors(index)
+            str_label    = self.labelClassToString(label)      
+            doc_id       = self.labels[index][8] 
+            doc_index    = self.labels[index][9]  
+            
+        else:    
+        
+            index, label = self.drawTrainingSample()
+            vectors      = self.getVectors(index)
+            str_label    = self.labelClassToString(label)      
+            doc_id       = self.labels[index][8] 
+            doc_index    = self.labels[index][9]               
         
         return torch.tensor(np.asarray(vectors)).float(), torch.tensor(label).long(), str_label, doc_id, doc_index
 

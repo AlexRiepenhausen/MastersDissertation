@@ -30,14 +30,14 @@ if __name__ == '__main__':
     ros = paths.RosDataPaths(100, 100)
     
     # set mode of operation
-    mode       = Mode.lstm
+    mode       = Mode.plot
     save_model = True
     confusion  = True
     
-    #train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
-    #test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
+    # train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
+    # test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
     
-    #exit(0)
+    # exit(0)
     
     if mode == Mode.display:
         display = display.Display(ros.docpath, ros.docfile_house, 200, houses=True)
@@ -89,8 +89,8 @@ if __name__ == '__main__':
                            ros.vec_files_train_labels,
                            ros.vec_files_test,
                            ros.vec_files_test_labels,
-                           learning_rate=0.001,
-                           iterations_per_epoch=100,
+                           learning_rate=0.002,
+                           iterations_per_epoch=10,
                            input_dim=75,
                            category=labelType.exclusive_strata,
                            hidden_dim=30,
@@ -101,7 +101,7 @@ if __name__ == '__main__':
         
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=100, compute_accuracies=True)
+        parcel  = lstm.train(num_epochs=5, compute_accuracies=True)
         
         # save model if specified
         if save_model:
@@ -142,10 +142,10 @@ if __name__ == '__main__':
         w2v_lss_y_range  = [ 0.0, 4.0]
         lstm_lss_y_range = [-0.2, 2.0]
         lstm_acc_y_range = [-0.1, 1.1]
-
+        
         plotgraphs.convertCsvToGraphs(ros.w2v_csv_lss_dir,  ros.w2v_graph_lss_dir,  w2v_lss_y_range,  'Log-sigmoid loss')
-        plotgraphs.convertCsvToGraphs(ros.lstm_csv_lss_dir, ros.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')
-        plotgraphs.convertCsvToGraphs(ros.lstm_csv_acc_dir, ros.lstm_graph_acc_dir, lstm_acc_y_range, 'Accuracy in percent')
+        plotgraphs.convertCsvToGraphs(ros.lstm_csv_lss_dir, ros.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')   
+        plotgraphs.mergeAllGraphs(ros.lstm_csv_acc_dir, ros.lstm_merged_dir, lstm_acc_y_range, 'Accuracy in percent')
 
 
     end = time.time()
