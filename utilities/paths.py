@@ -45,7 +45,6 @@ class RosDataPaths():
         
         self.vec_files_train_labels = generateFilePaths('./data/lstm/training/vectors/trainsetlabels/labels_', num_train, '.txt')
         self.vec_files_test_labels  = generateFilePaths('./data/lstm/training/vectors/testsetlabels/labels_', num_test, '.txt')
-             
         
         # lstm training results
         self.lstm_csv_acc_dir   = './data/lstm/performance/csv_accuracies/'

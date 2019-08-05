@@ -29,10 +29,6 @@ class VectorDataset(Dataset):
         
         self.keywords   = self.getKeywords()
         self.labels     = self.getLabelsFromFiles(label_path)    
-        self.files      = self.readFiles()    
-
-        # print label distribution
-        self.lbl_hist   = self.labelHistogram()
         
         self.positive_samples = 0
         self.negative_samples = 0    
@@ -66,42 +62,8 @@ class VectorDataset(Dataset):
             labels.append(lines)
     
         return labels
-        
-        
-        
-    def readFiles(self):
-    
-        allfiles = list()
-    
-        for index in range(0,self.num_files):
-        
-            vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
-    
-            vectors = list()
-            line    = vectorfile.readline()
-      
-            while line:
-                arr = np.fromstring(line, dtype=float, sep=" ")
-                vectors.append(arr)
-                line = vectorfile.readline()  
-                
-            allfiles.append(vectors) 
-            
-        return allfiles   
-        
-
-
-    def labelHistogram(self):
-        lbl_hist = defaultdict(int)
-        for label in self.labels:
-            lbl = self.keywords[label[2]]
-            lbl_hist[lbl] += 1
-
-        lbl_hist = OrderedDict(sorted(lbl_hist.items()))
-        
-        return lbl_hist    
-     
-     
+ 
+           
      
     def drawTrainingSample(self):
     

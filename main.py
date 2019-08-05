@@ -27,16 +27,15 @@ if __name__ == '__main__':
     loading = start
     
     # init paths
-    ros = paths.RosDataPaths(100, 100)
+    ros = paths.RosDataPaths(1000, 100)
     
     # set mode of operation
-    mode       = Mode.plot
+    mode       = Mode.lstm
     save_model = True
     confusion  = True
     
     # train = output.OutputMatrix('./data/lstm/training/vectors/trainsetlabels/')
     # test  = output.OutputMatrix('./data/lstm/training/vectors/testsetlabels/')
-    
     # exit(0)
     
     if mode == Mode.display:
@@ -44,6 +43,7 @@ if __name__ == '__main__':
         #display.run()
         display.displayAnnotationInfo()
         exit(0)
+    
     
     
     if mode == Mode.word2vec:
@@ -70,38 +70,41 @@ if __name__ == '__main__':
             torch.save(w2v.skip_gram_model.state_dict(), path)
 
 
+
     if mode == Mode.conversion:
     
         # convert documents into vector representation and save to different file location                
-        duplication = duplicator.Duplicate(ros.docfile_flats, 1)    # 31 and 59
+        duplication = duplicator.Duplicate(ros.docfile_flats, 10)    # 31 and 59
         duplication.convert(100, ros.dict_file, ros.vec_files_train_path, ros.vec_files_train_labels_path,   0, labelSelection=None)
-        duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=None)
+        #duplication.convert(100, ros.dict_file, ros.vec_files_test_path,  ros.vec_files_test_labels_path,  100, labelSelection=None)
         
         # utilities.ndjsonVectorisation(ros.testing,  ros.vec_files_test,  ros.vec_files_test_labels  ,ros.dict_file, unknown_vec=Vec.skipVec)
         # utilities.ndjsonVectorisation(ros.training, ros.vec_files_train, ros.vec_files_train_labels, ros.dict_file, unknown_vec=Vec.skipVec)
         exit(0)
 
 
-    if mode == Mode.lstm:
 
+    if mode == Mode.lstm:
+    
         # lstm training parameters
         lstm = LSTMTrainer(ros.vec_files_train,
                            ros.vec_files_train_labels,
                            ros.vec_files_test,
                            ros.vec_files_test_labels,
                            learning_rate=0.002,
-                           iterations_per_epoch=10,
+                           iterations_per_epoch=100,
                            input_dim=75,
-                           category=labelType.exclusive_strata,
+                           category=labelType.common_solum,
                            hidden_dim=30,
-                           layer_dim=1,
+                           layer_dim=2,
                            output_dim=2)
         
-        # model = ros.lstm_model_param + "lr_0.001_ipe_100_in_75_ct_2_hd_50_ly_1_out_2_date_2019_07_26_21_01_52"        
+        # model = ros.lstm_model_param + "lr_0.001_ipe_100_in_75_ct_2_hd_50_ly_1_out_2_date_2019_07_26_21_01_52" 
+        print("Looking at: {}".format(labelType.common_solum))       
         
         # train lstm
         loading = time.time()
-        parcel  = lstm.train(num_epochs=5, compute_accuracies=True)
+        parcel  = lstm.train(num_epochs=400, compute_accuracies=True)
         
         # save model if specified
         if save_model:
@@ -131,10 +134,12 @@ if __name__ == '__main__':
 
 
 
+
     if mode == Mode.similarity:
         path = ros.sim_img_dir + utilities.timeStampedFileName() + '.bmp'
         measure_similarity = CosineSimilarity(p.imdb_files_neg_train, ros.dict_file)
         measure_similarity.angularDistancesToFile(path)
+
 
 
     if mode == Mode.plot:
@@ -146,6 +151,7 @@ if __name__ == '__main__':
         plotgraphs.convertCsvToGraphs(ros.w2v_csv_lss_dir,  ros.w2v_graph_lss_dir,  w2v_lss_y_range,  'Log-sigmoid loss')
         plotgraphs.convertCsvToGraphs(ros.lstm_csv_lss_dir, ros.lstm_graph_lss_dir, lstm_lss_y_range, 'Cross-entropy loss')   
         plotgraphs.mergeAllGraphs(ros.lstm_csv_acc_dir, ros.lstm_merged_dir, lstm_acc_y_range, 'Accuracy in percent')
+
 
 
     end = time.time()
