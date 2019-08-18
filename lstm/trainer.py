@@ -9,10 +9,9 @@ from utilities.utilities import weightInit
 class LSTMTrainer:
 
     def __init__(self, train_files, train_labels, test_files, test_labels, learning_rate, iterations_per_epoch,
-                 input_dim, seq_dim, hidden_dim, layer_dim, output_dim):
+                 input_dim, hidden_dim, layer_dim, output_dim):
 
         self.input_dim  = input_dim
-        self.seq_dim    = seq_dim
         self.hidden_dim = hidden_dim
         self.layer_dim  = layer_dim
         self.output_dim = output_dim
@@ -26,13 +25,12 @@ class LSTMTrainer:
         self.learning_rate = learning_rate
         self.optimiser = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
 
-        self.train_loader = VectorDataset(train_files, train_labels, seq_dim)
-        self.test_loader  = VectorDataset(test_files, test_labels, seq_dim) # identical to train_loader for now
+        self.train_loader = VectorDataset(train_files, train_labels, loadertype="train")
+        self.test_loader  = VectorDataset(test_files, test_labels, loadertype="test") 
 
-        self.to_string = "lr_{}_ipe_{}_in_{}_sq_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
+        self.to_string = "lr_{}_ipe_{}_in_{}_hd_{}_ly_{}_out_{}".format(learning_rate,
                                                                        iterations_per_epoch,
                                                                        input_dim,
-                                                                       seq_dim,
                                                                        hidden_dim,
                                                                        layer_dim,
                                                                        output_dim)
@@ -149,7 +147,7 @@ class LSTMTrainer:
                 if self.runEvaluation(i):
                     losses.append(avg_loss/self.iterations_per_epoch)
                     if compute_accuracies==True:
-                        _, accuracy = self.evaluateModel(test_samples)
+                        _, accuracy = self.evaluateModel(test_samples,test=True)
                         accuracies.append(accuracy)
                     break
 

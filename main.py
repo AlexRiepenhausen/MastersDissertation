@@ -15,10 +15,10 @@ if __name__ == '__main__':
     loading = start
 
     # init paths
-    ros = paths.RosDataPaths(100, 100)
+    ros = paths.RosDataPaths(150, 50)
 
     # set mode of operation
-    mode       = Mode.display
+    mode       = Mode.lstm
     save_model = True
     confusion  = True
     
@@ -66,9 +66,8 @@ if __name__ == '__main__':
                            ros.vec_files_test,
                            ros.vec_files_test_labels,
                            learning_rate=0.002,
-                           iterations_per_epoch=500,
-                           input_dim=74,
-                           seq_dim=6,
+                           iterations_per_epoch=300,
+                           input_dim=75,
                            hidden_dim=30,
                            layer_dim=1,
                            output_dim=2)
@@ -76,7 +75,6 @@ if __name__ == '__main__':
         # train lstm
         loading = time.time()
         parcel  = lstm.train(num_epochs=100, compute_accuracies=True)
-        #parcel = lstm.train(num_epochs=1, compute_accuracies=False, test_samples=100)
 
         # save model if specified
         if save_model:
@@ -90,14 +88,14 @@ if __name__ == '__main__':
         if confusion:
 
             # test set
-            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=True)
+            labels, accuracy = lstm.evaluateModel(test_samples=97, test=True)
             print("Accuracy Test Set: {}".format(accuracy))
             class_names = [0, 1]
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')
 
             # training set
-            labels, accuracy = lstm.evaluateModel(test_samples=1000, test=False)
+            labels, accuracy = lstm.evaluateModel(test_samples=97, test=False)
             print("Accuracy Training Set: {}".format(accuracy))
             plotgraphs.plot_confusion_matrix(labels[0], labels[1], ros.confusion_matrix, classes=class_names,
                                                 title='Confusion matrix, without normalization')

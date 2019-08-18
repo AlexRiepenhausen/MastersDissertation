@@ -89,6 +89,7 @@ def ndjsonVectorisation(data, vec_files, labels, dict_file, unknown_vec):
                 
         with open(labels[i], 'w') as f:
             f.write(data[i]['property_type'] + '\n')
+            print("{} {}".format(i, data[i]['property_type']))
             
             #f.write(data[i]['exclusive_solum']+ '\n')                   
             #f.write(data[i]['common_solum']+ '\n')  

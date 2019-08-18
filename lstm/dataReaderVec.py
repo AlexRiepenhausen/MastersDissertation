@@ -6,7 +6,9 @@ from collections import defaultdict, OrderedDict
 
 class VectorDataset(Dataset):
 
-    def __init__(self, file_paths, labels, seq_dim, batch_size=1):
+    def __init__(self, file_paths, labels, loadertype="train", batch_size=1):
+    
+        self.loadertype = loadertype
     
         self.file_paths = file_paths
         self.num_files  = len(file_paths)
@@ -15,9 +17,8 @@ class VectorDataset(Dataset):
         self.keywords   = self.getKeywords()
         self.labels     = self.getLabelsFromFiles(labels)    
         self.files      = self.readFiles()    
-
-        # print label distribution
-        self.lbl_hist   = self.labelHistogram()
+        
+        self.index      = 0
 
 
     def __len__(self):
@@ -65,81 +66,53 @@ class VectorDataset(Dataset):
             allfiles.append(vectors) 
             
         return allfiles   
-        
+   
+   
+    def house_or_flat(self, label):
     
-    def printLabelDictionary(self, lbl_hist, reverse_dict):
-    
-        print("| ---- Label Dictionary ----  |")
-        print("|                             |")
-        for item in lbl_hist:
-            print("| Label: {:2d}, Description: {} ".format(item, reverse_dict[item]))
-        print("|                             |")      
-
-
-    def labelHistogram(self):
-    
-        lbl_hist = defaultdict(int)
-        reverse_dict = dict()
+        if label != 'house': 
+            if label != 'flat':
+                return False
         
-        for label in self.labels:
-            lbl = self.keywords[label[0]]
-            lbl_hist[lbl] += 1
-            reverse_dict[lbl] = label[0]
-
-        lbl_hist = OrderedDict(sorted(lbl_hist.items()))
-        
-        print("| ---- Label Frequency ----  |")
-        print("|                            |")
-        for item in lbl_hist:
-                print("| Label: {:2d}, Frequency: {:4d} |".format(item, lbl_hist[item]))
-        print("|                            |")
-        
-        self.printLabelDictionary(lbl_hist, reverse_dict) 
-        
-        return lbl_hist    
-        
-        
-    def drawSample(self):
-    
-        threshold  = random.uniform(0, 0.95)
-    
-        while True:
-            index      = random.randint(0, self.num_files-1)
-            label_str  = self.labels[index][1]
-            label      = self.keywords[label_str]
-            
-            draw_prob  = 1.0 - float(self.lbl_hist[label]/self.num_files)
-            
-            if draw_prob > threshold:
-                return index
+        if label != 'flat': 
+            if label != 'house':
+                return False
                 
-
+        return True
+                                
 
     def __getitem__(self, idx):
     
-        '''
-        index      = self.drawSample()
-        
-        vectorfile = open(self.file_paths[index], 'r', encoding='utf8')
-    
-        vectors = list()
-        line    = vectorfile.readline()
-  
-        while line:
-            arr = np.fromstring(line, dtype=float, sep=" ")
-            vectors.append(arr)
-            line = vectorfile.readline()  
-            
-        label_str  = self.labels[index][1]
-        label      = self.keywords[label_str]
-    
-        '''
+        if self.loadertype == "train":
      
-        #index     = self.drawSample()
-        index      = random.randint(0, self.num_files-1)
-        vectorfile = self.files[index]
-        label_str  = self.labels[index]
-        label      = self.keywords[label_str[0]]
-
-        return torch.tensor([np.asarray(vectorfile)]).float(), torch.tensor(label).long()
+            index      = random.randint(0, self.num_files-1)      
+            label_str  = self.labels[index]
+            
+            while not self.house_or_flat(label_str[0]):
+                index      = random.randint(0, self.num_files-1)  
+                label_str  = self.labels[index]
+                 
+            label      = self.keywords[label_str[0]]      
+            vectorfile = self.files[index]
+    
+            return torch.tensor([np.asarray(vectorfile)]).float(), torch.tensor(label).long()
+            
+        if self.loadertype == "test":
+        
+            if self.index >= 100:
+                self.index = 0    
+        
+            label_str  = self.labels[self.index]
+            
+            while not self.house_or_flat(label_str[0]):
+                self.index += 1
+                label_str  = self.labels[self.index]
+                 
+            label      = self.keywords[label_str[0]]      
+            vectorfile = self.files[self.index]
+            
+            self.index += 1
+    
+            return torch.tensor([np.asarray(vectorfile)]).float(), torch.tensor(label).long()        
+        
 

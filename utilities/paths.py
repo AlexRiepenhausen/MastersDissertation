@@ -71,7 +71,7 @@ class RosDataPaths():
         # word2vec training raw documents
         self.docpath = './data/w2v/training/documents/'
         self.docfile_flats = './data/w2v/training/documents/flatted_examples.ndjson'
-        self.docfile_house = './data/w2v/training/documents/examples.ndjson'
+        self.docfile_house = './data/w2v/training/documents/backup/examples_200.ndjson'
         self.colours = './data/w2v/training/documents/colours.txt'
 
         # word2vec training data dictionaries
@@ -100,11 +100,11 @@ class RosDataPaths():
         
         self.testing  = house[num_train:(num_train+num_test)] + flat[num_train:(num_train+num_test)]
         
-        self.vec_files_train = generateFilePaths('./data/lstm/training/vectors/trainset/train_', num_train, '.txt')
-        self.vec_files_test  = generateFilePaths('./data/lstm/training/vectors/testset/test_', num_test, '.txt')
+        self.vec_files_train = generateFilePaths('./data/lstm/training/vectors/trainset/train_', num_train*2, '.txt')
+        self.vec_files_test  = generateFilePaths('./data/lstm/training/vectors/testset/test_', num_test*2, '.txt')
         
-        self.vec_files_train_labels = generateFilePaths('./data/lstm/training/vectors/trainsetlabels/labels_', num_train, '.txt')
-        self.vec_files_test_labels  = generateFilePaths('./data/lstm/training/vectors/testsetlabels/labels_', num_test, '.txt')
+        self.vec_files_train_labels = generateFilePaths('./data/lstm/training/vectors/trainsetlabels/labels_', num_train*2, '.txt')
+        self.vec_files_test_labels  = generateFilePaths('./data/lstm/training/vectors/testsetlabels/labels_', num_test*2, '.txt')
         
         
         # lstm training results
